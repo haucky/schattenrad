@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schattenrad – Drehscheiben für Schattenspiele</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--night:#1b1829;--panel:#24203a;--panel2:#2c2746;--line:#3b3558;--lamp:#ffcf6e;--lamp2:#f0a24a;--paper:#f6eedc;--muted:#aaa3c6;--red:#ff6a5c;--ok:#8fd694}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--night);color:var(--paper);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{font-family:Fredoka,system-ui,sans-serif;font-weight:600;letter-spacing:.2px;margin:0}
+a{color:var(--lamp)}
+.app{max-width:1220px;margin:0 auto;padding:14px 14px 60px}
+header{display:flex;align-items:center;gap:12px;margin:4px 0 12px}
+header svg{flex:none}
+header h1{font-size:26px;line-height:1}
+header p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+nav button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--paper);padding:8px 13px;border-radius:999px;font:500 14px Fredoka,system-ui;cursor:pointer}
+nav button.on{background:var(--lamp);color:#2a1d08;border-color:var(--lamp)}
+.grid{display:grid;gap:16px}
+@media(min-width:920px){.grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}#viewer{position:sticky;top:12px;align-self:start}}
+.grid.noview{grid-template-columns:1fr}
+.grid.noview #viewer{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px}
+.card+.card{margin-top:14px}
+.card h2{font-size:19px;margin-bottom:6px}
+.card h3{font-size:16px;margin:12px 0 4px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+#wallWrap{position:relative;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 10px 30px #0006}
+#wall{display:block;width:100%;height:auto;touch-action:pan-y;cursor:grab}
+#wallHint{position:absolute;right:10px;top:7px;font-size:11.5px;color:#0008;font-weight:600;pointer-events:none}
+.ctrls{display:flex;align-items:center;gap:8px;margin:10px 0 6px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--paper);padding:8px 12px;border-radius:10px;font:500 14px system-ui;cursor:pointer}
+.btn:hover{border-color:var(--lamp)}
+.btn.pri{background:var(--lamp);color:#2a1d08;border-color:var(--lamp);font-weight:600}
+.btn.on{background:var(--lamp2);color:#2a1d08;border-color:var(--lamp2)}
+.btn.sm{padding:4px 9px;font-size:13px;border-radius:8px}
+#caption{min-height:66px;background:var(--panel2);border-radius:12px;padding:9px 12px;margin-bottom:10px}
+#caption b{font-family:Fredoka,system-ui;font-weight:600;color:var(--lamp)}
+#caption .num{color:var(--muted);font-size:12.5px;margin-right:6px}
+.discRow{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+#disc{width:min(250px,48vw);height:auto;flex:none;touch-action:none;cursor:grab}
+.facts{flex:1;min-width:180px;font-size:13.5px}
+.facts .row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.facts input[type=number]{width:72px;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 7px;font:14px system-ui}
+.warn{color:var(--red);font-size:13px}
+.okmsg{color:var(--ok);font-size:13px}
+.exp{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#status{font-size:12.5px;color:var(--muted);margin-top:6px;min-height:18px}
+textarea.out{width:100%;height:110px;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;font:11px ui-monospace,monospace;margin-top:8px}
+.scenes{list-style:none;padding:0;margin:8px 0 0;counter-reset:s}
+.scenes li{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.scenes li:hover b{color:var(--lamp)}
+.scenes li::before{counter-increment:s;content:counter(s);width:24px;height:24px;border-radius:50%;background:var(--lamp);color:#2a1d08;display:grid;place-items:center;font:600 13px Fredoka,system-ui}
+.item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0}
+.item.sel{border-color:var(--lamp)}
+.item .r1{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.item select,.addrow select{flex:1;min-width:0;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px;font:14px system-ui}
+.item label,.sl{display:grid;grid-template-columns:78px 1fr 44px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.item output,.sl output{text-align:right;color:var(--paper);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--lamp)}
+.addrow{display:flex;gap:6px;margin-top:8px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:6px 0}
+.drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer}
+.drop:hover{border-color:var(--lamp);color:var(--paper)}
+.drop input{display:none}
+#kiThumb{max-width:120px;border-radius:8px;display:none;margin-top:8px;background:#fff}
+.prompt{background:var(--night);border:1px solid var(--line);border-radius:10px;padding:10px;font:12.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;margin:6px 0}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px}
+.ph h3{margin:0}
+.tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);margin-right:4px}
+.idea{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.idea .ic{font-size:22px;line-height:1.2}
+.idea p{margin:2px 0 0}
+ul.tight{margin:6px 0;padding-left:18px}
+ul.tight li{margin:3px 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <svg width="46" height="46" viewBox="-50 -50 100 100" aria-hidden="true"><circle r="47" fill="#ffcf6e" opacity=".18"/><circle r="30" fill="#ffcf6e"/><path d="M-12-30v-9h5l4-5 4 5h5v9z M10-29l3-10 3 10z" fill="#ffcf6e"/><circle r="4" fill="#1b1829"/></svg>
+  <div><h1>Schattenrad</h1><p>Drehscheiben-Kulissen für Taschenlampen-Schattenspiele – entwerfen, prüfen, lasern.</p></div>
+</header>
+<nav id="tabs">
+  <button data-tab="geschichten">① Fertige Geschichte</button>
+  <button data-tab="ki">② KI-Bild → SVG</button>
+  <button data-tab="baukasten">③ Baukasten</button>
+  <button data-tab="prompts">Prompts</button>
+  <button data-tab="tipps">Bauen &amp; Ideen</button>
+</nav>
+
+<div class="grid" id="grid">
+<section id="viewer">
+  <div id="wallWrap">
+    <svg id="wall" viewBox="-40 -100 80 50" aria-label="Wand-Vorschau">
+      <defs>
+        <radialGradient id="lamp" cx="50%" cy="38%" r="75%">
+          <stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#ffd58a"/><stop offset=".8" stop-color="#c9823f"/><stop offset="1" stop-color="#4a2f1c"/>
+        </radialGradient>
+        <filter id="soft" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation=".13"/></filter>
+      </defs>
+      <rect id="wallBg" x="-500" y="-500" width="1000" height="1000" fill="url(#lamp)"/>
+      <g filter="url(#soft)"><g id="wallRot"><path id="wallPath" fill="#17121c" fill-rule="evenodd"/></g></g>
+    </svg>
+    <div id="wallHint">⟷ wischen zum Drehen</div>
+  </div>
+  <div class="ctrls">
+    <button class="btn" id="prev" title="Vorherige Szene">◀</button>
+    <button class="btn" id="play" title="Langsam drehen">▶ Drehen</button>
+    <button class="btn" id="next" title="Nächste Szene">▶▶</button>
+    <span class="muted small" style="margin-left:auto" id="angleLbl">0°</span>
+  </div>
+  <div id="caption"></div>
+  <div class="discRow">
+    <svg id="disc" viewBox="-110 -110 220 220" aria-label="Scheibe">
+      <rect id="discWin" fill="#ffcf6e" opacity=".13" rx="3"/>
+      <g id="discRot">
+        <path id="discPath" fill="#c79a62" stroke="#ffe2a8" stroke-width=".5" fill-rule="evenodd"/>
+        <path id="discIsl" fill="#ff6a5c" fill-rule="evenodd"/>
+        <circle id="discHole" r="4" fill="#1b1829" stroke="#ffe2a8" stroke-width=".5"/>
+        <path id="discMark" fill="#1b1829" opacity=".35"/>
+      </g>
+    </svg>
+    <div class="facts">
+      <div id="facts" class="small"></div>
+      <div id="warn"></div>
+      <div class="row"><span style="flex:1">Gesamt-Ø (mm)</span><input type="number" id="optD" value="200" min="60" max="600" step="5"></div>
+      <div class="row"><span style="flex:1">Loch für Stift (mm)</span><input type="number" id="optHole" value="8" min="3" max="20" step="0.5"></div>
+      <div class="exp">
+        <button class="btn pri" id="dl">SVG herunterladen</button>
+        <button class="btn" id="cp">SVG kopieren</button>
+      </div>
+      <div id="status"></div>
+    </div>
+  </div>
+  <textarea class="out" id="svgOut" hidden readonly></textarea>
+</section>
+
+<main id="panels">
+<!-- ① Geschichte -->
+<section data-panel="geschichten">
+  <div class="card">
+    <h2>Die Wandermaus</h2>
+    <p class="muted small" style="margin:0 0 6px">Sechs Szenen rundherum – von Hand als Vektorformen gezeichnet. Oben siehst du, was an der Wand erscheint. Wische, tippe auf eine Szene oder drück auf „Drehen“.</p>
+    <ol class="scenes" id="storyList"></ol>
+    <div class="exp"><button class="btn" id="toBk">Im Baukasten bearbeiten →</button></div>
+  </div>
+  <div class="card">
+    <h2>So liest man die Scheibe</h2>
+    <ul class="tight small">
+      <li>Die Figuren stehen auf dem Rand und zeigen nach außen – wie auf einem kleinen runden Planeten.</li>
+      <li>Die Lampe steht <b>hinter</b> der Scheibe und leuchtet über die Oberkante an die Wand. Was oben steht, wird sichtbar.</li>
+      <li>Augen, Fenster und Pilzpunkte sind kleine Löcher, an der Wand erscheinen sie als Lichtpunkte.</li>
+      <li>Drehst du gegen den Uhrzeigersinn, läuft die Geschichte von links nach rechts weiter.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ② KI -->
+<section data-panel="ki" hidden>
+  <div class="card">
+    <h2>KI-Bild → Laser-SVG</h2>
+    <p class="muted small" style="margin:0 0 8px">Lade ein Schwarz-Weiß-Bild hoch, etwa aus Nano Banana mit einem Prompt aus dem Reiter „Prompts“. Das Rad wird automatisch erkannt, vektorisiert, auf den Gesamt-Ø skaliert und bekommt ein Mittelloch. Lose Teile siehst du rot, sie werden nicht exportiert.</p>
+    <label class="drop">Bild wählen (PNG/JPG)<input type="file" id="kiFile" accept="image/*"></label>
+    <img id="kiThumb" alt="Original">
+    <div style="margin-top:12px">
+      <label class="sl">Schwelle <input type="range" id="kiT" min="0.2" max="0.8" step="0.02" value="0.5"><output>0.50</output></label>
+      <label class="sl">Glätten <input type="range" id="kiBlur" min="0" max="4" step="1" value="1"><output>1</output></label>
+      <label class="chk"><input type="checkbox" id="kiCircle" checked> Grundscheibe zu perfektem Kreis ergänzen</label>
+      <label class="chk"><input type="checkbox" id="kiHoles" checked> Winzige Löcher (&lt; 2 mm²) füllen</label>
+      <label class="chk"><input type="checkbox" id="kiInv"> Farben umkehren (weiße Figur auf Schwarz)</label>
+    </div>
+    <div class="exp"><button class="btn" id="kiDemo">Testbild erzeugen</button></div>
+  </div>
+  <div class="card">
+    <h2>Szenen-Bild → Rad</h2>
+    <p class="muted small" style="margin:0 0 8px">Ein KI-Bild mit 4–8 einzelnen Szenen nebeneinander, jede auf ihrem eigenen schwarzen Bodenbalken (Prompt F). Die App findet die Szenen, schneidet sie aus, ordnet sie in Lesereihenfolge an und biegt sie entlang des Rands. Danach landen sie im Baukasten, wo du Größe, Position und Reihenfolge anpassen kannst.</p>
+    <label class="drop">Szenen-Bild wählen<input type="file" id="scFile" accept="image/*"></label>
+    <label class="sl" style="margin-top:10px">Max. Höhe <input type="range" id="scH" min="15" max="45" step="1" value="30"><output>30 mm</output></label>
+    <div class="exp"><button class="btn" id="scDemo">Testbild (Szenen-Raster)</button></div>
+    <div id="scInfo" class="small muted" style="margin-top:6px"></div>
+  </div>
+  <div class="card small">
+    <h2>Worauf es ankommt</h2>
+    <ul class="tight">
+      <li>Am besten klappt es mit reinem Schwarz auf reinem Weiß, quadratisch. Grautöne regelst du mit der Schwelle weg.</li>
+      <li>Alles, was nicht mit der Scheibe verbunden ist (Vögel, Sterne, Sonne), fällt beim Lasern heraus. Dafür ist die rote Markierung da.</li>
+      <li>KI-Modelle drehen Figuren selten sauber nach außen. Wenn das Ergebnis schief aussieht, nimm Weg ③: einzelne KI-Figuren im Baukasten platzieren.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ③ Baukasten -->
+<section data-panel="baukasten" hidden>
+  <div class="card">
+    <h2>Baukasten</h2>
+    <p class="muted small" style="margin:0 0 8px">Figuren aus der Bibliothek oder eigene KI-Figuren auf den Rand setzen. Neue Figuren landen dort, wo du gerade oben hinschaust.</p>
+    <div class="exp" style="margin-top:0">
+      <button class="btn sm" id="bkStory">Wandermaus laden</button>
+      <button class="btn sm" id="bkEmpty">Leere Scheibe</button>
+    </div>
+    <label class="sl" style="margin-top:10px">Grundradius <input type="range" id="bkR" min="40" max="120" step="1" value="88"><output>88</output></label>
+    <div class="addrow">
+      <select id="bkAddSel"></select>
+      <button class="btn pri" id="bkAdd">+ Hinzufügen</button>
+    </div>
+    <div id="bkItems"></div>
+  </div>
+  <div class="card">
+    <h2>Eigene Figur (z. B. aus KI)</h2>
+    <p class="muted small" style="margin:0 0 8px">Einzelne schwarze Silhouette auf Weiß, Seitenansicht, unten flach. Die Unterkante wird zum Boden. Passende Prompts findest du unter „Prompts“ → Einzelfiguren.</p>
+    <label class="drop">Figur-Bild wählen<input type="file" id="bkFile" accept="image/*"></label>
+  </div>
+</section>
+
+<!-- Prompts -->
+<section data-panel="prompts" hidden>
+  <div class="card" id="promptCard">
+    <h2>Prompts für Nano Banana &amp; Co.</h2>
+    <p class="muted small" style="margin:0">Auf Englisch funktionieren Bildmodelle am zuverlässigsten. Quadratisches Format wählen, ruhig 3–4 Varianten erzeugen und die beste in ② hochladen.</p>
+    <div id="promptList"></div>
+  </div>
+</section>
+
+<!-- Tipps -->
+<section data-panel="tipps" hidden>
+  <div class="card">
+    <h2>Bauen</h2>
+    <ul class="tight small">
+      <li><b>Material:</b> 3 mm Pappel-Sperrholz oder 2 mm Graupappe. Stege nicht dünner als ca. 1,5 mm, das hält die Bibliothek ein.</li>
+      <li><b>Größe:</b> 200 mm Ø passt auf fast jeden Laser. Größer heißt: mehr Detail an der Wand.</li>
+      <li><b>Loch:</b> 8 mm dreht sich locker auf einem normalen Bleistift (≈ 7,3 mm). Mit 7,5 mm sitzt es strammer.</li>
+      <li><b>Laser:</b> Rote Haarlinie = Schnitt. Innenkonturen (Augen, Loch) zuerst schneiden, LightBurn macht das mit „Innere zuerst“ von selbst.</li>
+      <li><b>Licht:</b> Kleine, nackte LED ohne Diffusor gibt die schärfsten Kanten. Raum dunkel, Lampe 10–30 cm hinter der Scheibe, Wand 1–2 m entfernt. Je näher die Lampe an der Scheibe, desto größer der Schatten.</li>
+      <li><b>Erzählen:</b> Szene drehen, anhalten, Geräusch machen („Schnapp!“), weiterdrehen. Mit 3 lieben Kinder Wiederholung, und irgendwann dreht sie selbst.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Option ③ – weitergedacht</h2>
+    <p class="muted small" style="margin:0 0 4px">Der Baukasten ist der erste Schritt: Szenen aus Einzelteilen statt einem großen KI-Bild. Diese Ideen gehen noch weiter:</p>
+    <div class="idea"><div class="ic">🧩</div><div><b>KI nur für Figuren, nicht für die Szene</b><p class="small muted">Die KI macht einzelne Silhouetten (Maus winkt, Elefant spritzt), du setzt sie im Baukasten auf den Rand. Ausrichtung, Abstände und Verbindungen stimmen dann immer. Ist schon eingebaut.</p></div></div>
+    <div class="idea"><div class="ic">🌗</div><div><b>Zwei Scheiben auf einem Stift</b><p class="small muted">Vorne die Landschaft mit Figuren, dahinter ein größerer Ring mit Fenstern für Mond, Sterne und Wolken. Beide drehen unabhängig, so wird es Tag und Nacht, und Bewegung entsteht ganz von allein.</p></div></div>
+    <div class="idea"><div class="ic">🎨</div><div><b>Farbfenster</b><p class="small muted">Fenster, Augen oder ein ausgeschnittener Fluss werden mit Transparentpapier beklebt und leuchten bunt an der Wand. Das kann deine Tochter selbst machen.</p></div></div>
+    <div class="idea"><div class="ic">🐊</div><div><b>Wackelteile</b><p class="small muted">Das Krokodilmaul extra schneiden und mit einer Musterbeutelklammer drehbar befestigen. Mit einem Faden klappt es dann „Schnapp!“.</p></div></div>
+    <div class="idea"><div class="ic">🔌</div><div><b>Steckfiguren</b><p class="small muted">Die Scheibe bekommt Schlitze am Rand, die Figuren einen Steckfuß. Ein Satz Figuren reicht dann für viele Geschichten, und dein Kind baut mit.</p></div></div>
+    <div class="idea"><div class="ic">🖼️</div><div><b>Bühnenrahmen</b><p class="small muted">Ein Karton-Rahmen mit Fenster direkt vor der Lampe zeigt immer nur eine Szene, wie ein kleines Theater. Der Rest bleibt im Dunkeln.</p></div></div>
+  </div>
+</section>
+</main>
+</div>
+</div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const mod=(a,n)=>((a%n)+n)%n;
+const PX=8; // Raster-Auflösung: Pixel pro mm
+
+/* ---------------- Zeichen-Helfer ---------------- */
+function makeF(ctx){
+  const D=Math.PI/180;
+  const path=(pts)=>{ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));};
+  return {ctx,
+    c:(x,y,r)=>{ctx.beginPath();ctx.arc(x,y,r,0,2*Math.PI);ctx.fill();},
+    e:(x,y,rx,ry,rot=0)=>{ctx.beginPath();ctx.ellipse(x,y,rx,ry,rot*D,0,2*Math.PI);ctx.fill();},
+    p:(pts)=>{path(pts);ctx.closePath();ctx.fill();},
+    r:(x,y,w,h,rad=0)=>{ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,rad);else ctx.rect(x,y,w,h);ctx.fill();},
+    l:(pts,w)=>{ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';path(pts);ctx.stroke();},
+    s:(pts,w)=>{ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+      for(let i=1;i<pts.length-1;i++){const mx=(pts[i][0]+pts[i+1][0])/2,my=(pts[i][1]+pts[i+1][1])/2;ctx.quadraticCurveTo(pts[i][0],pts[i][1],mx,my);}
+      const L=pts[pts.length-1];ctx.lineTo(L[0],L[1]);ctx.stroke();},
+    d:(d)=>ctx.fill(new Path2D(d)),
+    hole:(fn)=>{ctx.save();ctx.globalCompositeOperation='destination-out';fn();ctx.restore();},
+    rot:(cx,cy,deg,fn)=>{ctx.save();ctx.translate(cx,cy);ctx.rotate(deg*D);ctx.translate(-cx,-cy);fn();ctx.restore();},
+  };
+}
+
+/* ---------------- Figuren-Bibliothek (mm, Boden y=0, oben = -y, schaut nach rechts) ---------------- */
+function mouseBody(F){
+  F.e(0,-6.5,7,5);
+  F.e(6.6,-10,4.3,3.7,-15);
+  F.p([[8,-12.4],[13.8,-9.6],[8.8,-7.5]]); F.c(13.5,-9.6,1.15);
+  F.c(4,-14.8,3.4);
+  F.r(2,-4.5,2.3,4.5,1); F.r(-4.6,-4.5,2.3,4.5,1);
+  F.e(3.9,-.8,2,.9); F.e(-2.9,-.8,2,.9);
+  F.s([[-6.6,-5],[-10.5,-2.6],[-14,-4.6],[-15.6,-8.8]],2);
+}
+function mouseUp(F){
+  F.e(0,-8.6,4.7,6.9);
+  F.e(1.3,-17.6,4,3.7);
+  F.p([[3,-19.7],[8.8,-17.4],[3.4,-14.9]]); F.c(8.6,-17.4,1.1);
+  F.c(-2.2,-21.4,3.3);
+  F.e(1.9,-.8,3,1.05); F.e(-2.3,-.8,2.6,1);
+  F.s([[-3.6,-3],[-8,-1.2],[-11.2,-3.6],[-11.6,-7.8]],2);
+}
+function croc(F,{open=0,apple=false,smile=true}={}){
+  F.p([[-10,-8.4],[-31,-2],[-31.8,-.2],[-10,0]]);
+  F.e(0,-6,13,4.6);
+  for(let x=-27.5;x<=8;x+=3.3){
+    let yt,h; if(x>-11){yt=-6-4.6*Math.sqrt(Math.max(0,1-(x/13)**2));h=2.1;} else {yt=-8.4+(x+10)/(-21)*6.4;h=.8+1.3*(x+31)/21;}
+    F.p([[x-1.4,yt+.9],[x,yt-h],[x+1.4,yt+.9]]);
+  }
+  F.r(-8.5,-3.5,2.8,3.5,.8); F.r(5.5,-3.5,2.8,3.5,.8);
+  F.e(-6.2,-.75,2.6,.75); F.e(7.8,-.75,2.6,.75);
+  F.e(12,-5.6,4.6,3.9);
+  F.p([[11,-4.6],[26.5,-3.4],[26.8,open?-.2:-1.6],[11,open?-.2:-1.4]]);
+  if(open) for(const x of [16,19.5,23]){const y=-4.6+(x-11)/15.5*1.2;F.p([[x-1,y+.3],[x,y-1.8],[x+1,y+.3]]);}
+  F.rot(12,-5,-open,()=>{
+    F.p([[11,-8.8],[26.6,-5.6],[27.8,-4.6],[27.2,-3.6],[11,-3.8]]);
+    F.c(26,-5.9,1.4);
+    if(open) for(const x of [15.5,19,22.5]){const y=-3.8+(x-11)/16*.2;F.p([[x-1,y-.3],[x,y+1.8],[x+1,y-.3]]);}
+  });
+  F.c(13.6,-9.4,2.8);
+  if(apple){F.c(21,-8.4,4.3);F.l([[20.9,-12.4],[21.9,-14.4]],1.3);F.e(23.8,-14,2,.9,-20);}
+  F.hole(()=>{F.c(14.2,-9.9,1);
+    if(!open) F.l(smile?[[15,-3.9],[20,-3.6],[24.4,-4.1],[26,-5.3]]:[[15,-3.8],[25.5,-3.7]],.8);});
+}
+const FIG={
+  wandermaus:{label:'Maus mit Bündel',pad:[-5,12],draw(F){
+    mouseBody(F);
+    F.l([[3.5,-7.5],[6.5,-8.5]],2); F.l([[6.8,-8.2],[-9.5,-17.5]],1.7);
+    F.c(-10.4,-17.4,3.4); F.p([[-11.6,-21.6],[-9.4,-20.2],[-12.6,-19.6]]); F.p([[-8.2,-21.8],[-9.4,-20.2],[-7,-19.8]]);
+    F.hole(()=>F.c(8.5,-10.9,.95));}},
+  maus:{label:'Maus',pad:[-5,5],draw(F){mouseBody(F);F.hole(()=>F.c(8.5,-10.9,.95));}},
+  maus_staunt:{label:'Maus staunt',pad:[-4,5],draw(F){
+    mouseUp(F); F.s([[2.8,-11],[5.8,-12],[7.4,-14]],2); F.s([[-2.8,-11],[-6.2,-13.2],[-7,-16.8]],2);
+    F.hole(()=>F.c(3.9,-18.3,.95));}},
+  maus_apfel:{label:'Maus mit Apfel',pad:[-4,5],draw(F){
+    mouseUp(F);
+    F.s([[3.2,-12],[6.8,-16.5],[6.2,-23],[3.4,-26.6]],1.9);
+    F.c(.6,-29,3.8); F.l([[.6,-32.4],[1.4,-34.2]],1.2); F.e(3,-33.6,1.9,.85,-25);
+    F.hole(()=>F.c(3.9,-18.3,.95));}},
+  maus_rennt:{label:'Maus rennt',pad:[-21,11],draw(F){
+    F.e(0,-7.2,7.6,4.3,-6);
+    F.e(7.6,-8.6,4.1,3.5,12);
+    F.p([[9.2,-10.8],[14.8,-7.2],[9.6,-5.6]]); F.c(14.5,-7.3,1.1);
+    F.e(2.2,-13.6,3.7,2.7,-30);
+    F.s([[4,-5],[7.6,-3],[10.4,-.9]],1.9);
+    F.s([[-4,-5.2],[-8,-3.4],[-11,-1.6]],1.9);
+    F.s([[-7.2,-7.6],[-12,-8.6],[-16.5,-7.6],[-19.6,-9.6]],2);
+    F.c(-13.8,-1.1,1.6); F.c(-17,-1.5,2); F.c(-20.4,-1,1.4);
+    F.hole(()=>F.c(9.6,-9.5,.95));}},
+  kroko:{label:'Krokodil (lächelt)',pad:[-31,27],draw(F){croc(F);}},
+  kroko_auf:{label:'Krokodil: Maul auf',pad:[-31,26],draw(F){croc(F,{open:38});}},
+  kroko_apfel:{label:'Krokodil mit Apfel',pad:[-31,26],draw(F){croc(F,{open:20,apple:true});}},
+  kroko_wasser:{label:'Krokodil im Wasser',pad:[-15,18],draw(F){
+    F.e(-2,.6,13,3.1);
+    for(let x=-12.5;x<=4;x+=3.3){const yt=.6-3.1*Math.sqrt(Math.max(0,1-((x+2)/13)**2));F.p([[x-1.3,yt+.9],[x,yt-1.9],[x+1.3,yt+.9]]);}
+    F.e(10.5,.3,8,2.3);
+    F.c(6.6,-3.4,3.4);
+    F.c(17,-1.3,1.6);
+    F.hole(()=>F.c(7.3,-4,1.25));}},
+  welle:{label:'Welle',pad:[-3,3],draw(F){F.d('M-3.2 .6 C-2.4 -1.5 -.6 -2.9 1.3 -2.6 C.3 -2 .1 -1 .9 -.4 C1.6 .1 2.5 .3 3.2 .6 Z');}},
+  baum:{label:'Baum',pad:[-3,3],draw(F){
+    F.p([[-2.1,0],[-1.4,-15],[1.4,-15],[2.1,0]]); F.l([[0,-11],[-4,-15]],1.4);
+    F.c(0,-22,8); F.c(-6.2,-17.6,5.6); F.c(6.2,-17.6,5.6); F.c(-4.2,-26.6,5.4); F.c(4.2,-27,5.4);}},
+  apfelbaum:{label:'Apfelbaum',pad:[-3,3],draw(F){
+    FIG.baum.draw(F);
+    for(const [x,y] of [[-8.5,-12.6],[7.4,-12.3],[-3.4,-11.2]]){F.l([[x,y-2.4],[x,y]],1.1);F.c(x,y+1,1.9);}
+    F.hole(()=>{F.c(-2.5,-21,1.5);F.c(3.6,-25,1.5);F.c(5.5,-18.6,1.4);F.c(-5.6,-25.4,1.3);});}},
+  tanne:{label:'Tanne',pad:[-2,2],draw(F){
+    F.r(-1.6,-4.5,3.2,4.8);
+    F.p([[-9,-4],[0,-14.5],[9,-4]]); F.p([[-7.4,-10.4],[0,-21],[7.4,-10.4]]); F.p([[-5.6,-16.8],[0,-27.5],[5.6,-16.8]]);}},
+  busch:{label:'Busch',pad:[-7,7],draw(F){F.c(-4.4,-3.6,4.2);F.c(0,-5.8,5.2);F.c(4.6,-3.6,4.2);}},
+  haus:{label:'Haus',pad:[-10,10],draw(F){
+    F.r(-10,-15,20,15.3,.5); F.p([[-13.2,-13.8],[0,-26.5],[13.2,-13.8]]);
+    F.r(5,-25.5,3.6,7); F.c(7,-26.6,1.8); F.c(8.6,-29.6,2.1); F.c(11.2,-32.4,2.5);
+    F.hole(()=>{F.r(-6.5,-10.5,5,8.5,2.4);F.c(5,-8.5,2.4);F.c(0,-18.6,1.6);});}},
+  blume:{label:'Blume',pad:[-1.5,1.5],draw(F){
+    F.l([[0,0],[0,-10]],1.6); F.e(2,-4.2,2.2,.95,-30);
+    for(let k=0;k<5;k++){const a=k/5*2*Math.PI-Math.PI/2;F.c(2.3*Math.cos(a),-11.2+2.3*Math.sin(a),1.7);}
+    F.hole(()=>F.c(0,-11.2,.85));}},
+  gras:{label:'Gras',pad:[-4,4],draw(F){F.p([[-4,.3],[-3.2,-4.5],[-1.8,.3]]);F.p([[-2.2,.3],[0,-6.5],[1.4,.3]]);F.p([[.8,.3],[3.4,-4],[3.8,.3]]);}},
+  pilz:{label:'Pilz',pad:[-2,2],draw(F){F.r(-1.6,-5.4,3.2,5.7,1);F.d('M-6 -4.6 Q-5.6 -11 0 -11.4 Q5.6 -11 6 -4.6 Z');F.hole(()=>{F.c(-2.4,-7.6,1);F.c(2.2,-8.3,.9);});}},
+  schnecke:{label:'Schnecke',pad:[-6,6],draw(F){
+    F.e(.4,-1.3,6.4,1.6); F.e(5.3,-3,1.5,2.4,22); F.l([[5.6,-4.6],[7,-7.6]],1.2); F.c(7.1,-7.8,1); F.l([[4.6,-4.8],[4.8,-7.8]],1.2); F.c(4.8,-8,.95);
+    F.c(-1,-5.2,4.4);
+    F.hole(()=>{const pts=[];for(let t=0;t<=2.2*Math.PI;t+=.2){const r=.4+t*.42;pts.push([-1+r*Math.cos(t),-5.2+r*Math.sin(t)]);}F.l(pts,.8);});}},
+  stein:{label:'Stein',pad:[-4,4],draw(F){F.e(0,-.8,4.2,2.6);}},
+};
+
+/* ---------------- Geschichte ---------------- */
+const STORY={R:88,items:[
+  {f:'busch',a:-22},{f:'haus',a:-9},{f:'blume',a:2},{f:'blume',a:4.5,s:.8},{f:'wandermaus',a:14},{f:'gras',a:24},
+  {f:'tanne',a:37},{f:'tanne',a:44,s:.75},{f:'pilz',a:52},{f:'wandermaus',a:62},{f:'schnecke',a:72},{f:'tanne',a:82,s:.9},
+  {f:'gras',a:99},{f:'maus_staunt',a:108},{f:'welle',a:115,to:146,step:5.5,s:1.35},{f:'kroko_wasser',a:131,flip:true,s:1.2},
+  {f:'maus_rennt',a:164,flip:true},{f:'kroko_auf',a:193,flip:true,s:.95},{f:'welle',a:208,to:221,step:4.2},
+  {f:'apfelbaum',a:229},{f:'maus_apfel',a:238},{f:'kroko_apfel',a:263,flip:true,s:.95},
+  {f:'welle',a:283,to:322,step:4.2},{f:'kroko',a:302,s:.85},{f:'maus',a:299.5,lift:5,s:.85},{f:'gras',a:335}
+],scenes:[
+  {a:0,t:'Tschüss, Haus!',x:'Die kleine Maus packt ihr Bündel. Sie geht wandern. Tschüss, Haus!'},
+  {a:60,t:'Im Wald',x:'Tapp, tapp, tapp – durch den Wald. Hallo Pilz! Hallo Schnecke!'},
+  {a:122,t:'Am Fluss',x:'Ein Fluss! Blubb, blubb … Wer guckt denn da aus dem Wasser?'},
+  {a:182,t:'Schnapp!',x:'Das Krokodil! SCHNAPP! Die Maus rennt schnell, schnell, schnell weg.'},
+  {a:248,t:'Die Idee',x:'Die Maus hat eine Idee. Sie pflückt einen Apfel – für das Krokodil. Mampf! Es hatte nur Hunger.'},
+  {a:302,t:'Freunde',x:'Jetzt sind sie Freunde. Das Krokodil trägt die Maus über den Fluss – und zurück nach Hause.'},
+]};
+
+/* ---------------- Rendern einer Szene ins Raster ---------------- */
+const custom={}; // id -> {label,url,aspect,img}
+function figOf(id){return FIG[id]||custom[id];}
+function expand(items){const out=[];for(const it of items){
+  if(it.to!=null){let to=it.to;while(to<it.a)to+=360;const st=Math.max(2,it.step||5);for(let a=it.a;a<=to+.01;a+=st)out.push({...it,a,to:null});}
+  else out.push(it);}return out;}
+function drawPad(ctx,x0,x1,R,s){ // Boden unter der Figur, weich in die Kreiskante auslaufend
+  const yc=x=>{const X=Math.abs(x*s);return X>=R*.95?20/s:(R-Math.sqrt(R*R-X*X))/s+.3/s;};
+  const top=-.25,ramp=x=>Math.max(1.5,3.2*yc(x)),r0=ramp(x0),r1=ramp(x1),pts=[],N=14;
+  for(let i=0;i<=N;i++){const t=i/N,x=x0-r0+t*r0,e=t*t*(3-2*t);pts.push([x,yc(x0-r0)*(1-e)+top*e]);}
+  for(let i=0;i<=N;i++){const t=i/N,x=x1+t*r1,e=t*t*(3-2*t);pts.push([x,top*(1-e)+yc(x1+r1)*e]);}
+  pts.push([x1+r1,25/s],[x0-r0,25/s]);
+  ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.closePath();ctx.fill();
+}
+function drawWarp(ctx,fig,it,R){ // Szene entlang des Kreisbogens biegen (Streifen für Streifen)
+  const s=it.s||1,h=fig.h*s,w=fig.w*s,img=fig.img,iw=img.naturalWidth,ih=img.naturalHeight;
+  const cols=Math.max(8,Math.min(iw,Math.ceil(w*PX))),sw=iw/cols,dw=w/cols,k=(1+h/R)*1.15;
+  for(let i=0;i<cols;i++){
+    const xm=-w/2+(i+.5)*dw,th=(it.a*Math.PI/180)+(it.flip?-xm:xm)/R;
+    ctx.save();ctx.rotate(th);ctx.translate(0,-R+.35);
+    ctx.drawImage(img,i*sw,0,sw,ih,-dw*k/2,-h,dw*k,h+.8);ctx.restore();
+  }
+}
+function renderScene(def){
+  const R=def.R, E=R+50, W=Math.ceil(2*E*PX);
+  const cv=document.createElement('canvas');cv.width=cv.height=W;
+  const ctx=cv.getContext('2d',{willReadFrequently:true});
+  ctx.setTransform(PX,0,0,PX,W/2,W/2);ctx.fillStyle='#000';ctx.strokeStyle='#000';
+  ctx.beginPath();ctx.arc(0,0,R,0,2*Math.PI);ctx.fill();
+  const F=makeF(ctx);
+  for(const it of expand(def.items)){
+    const fig=figOf(it.f);if(!fig)continue;
+    if(fig.warp&&!it.lift){drawWarp(ctx,fig,it,R);continue;}
+    const s=it.s||1,lift=it.lift||0;
+    ctx.save();ctx.rotate(it.a*Math.PI/180);ctx.translate(0,-R-lift+.35);ctx.scale(it.flip?-s:s,s);
+    if(!lift)drawPad(ctx,fig.pad[0],fig.pad[1],R,s);
+    fig.draw(F,it);ctx.restore();
+  }
+  const data=ctx.getImageData(0,0,W,W).data, f=new Float32Array(W*W);
+  for(let i=0;i<f.length;i++)f[i]=data[i*4+3]/255;
+  return {field:f,W,H:W,center:[W/2-.5,W/2-.5],baseRpx:R*PX,pxmm:PX};
+}
+
+/* ---------------- Bildverarbeitung ---------------- */
+function comps(f,W,H,T,inside){
+  const N=W*H,lab=new Int32Array(N),st=new Int32Array(N),sizes=[0],border=[false];let L=0;
+  for(let s=0;s<N;s++){
+    if(lab[s]||((f[s]>=T)!==inside))continue;
+    L++;let sp=0,cnt=0,bd=false;st[sp++]=s;lab[s]=L;
+    while(sp){const p=st[--sp];cnt++;const x=p%W,y=(p-x)/W;
+      if(x===0||y===0||x===W-1||y===H-1)bd=true;
+      if(x>0){const q=p-1;if(!lab[q]&&((f[q]>=T)===inside)){lab[q]=L;st[sp++]=q;}}
+      if(x<W-1){const q=p+1;if(!lab[q]&&((f[q]>=T)===inside)){lab[q]=L;st[sp++]=q;}}
+      if(y>0){const q=p-W;if(!lab[q]&&((f[q]>=T)===inside)){lab[q]=L;st[sp++]=q;}}
+      if(y<H-1){const q=p+W;if(!lab[q]&&((f[q]>=T)===inside)){lab[q]=L;st[sp++]=q;}}
+    }
+    sizes.push(cnt);border.push(bd);
+  }
+  return {lab,sizes,border};
+}
+function distT(mask,W,H){
+  const d=new Float32Array(W*H),S=Math.SQRT2;
+  for(let i=0;i<d.length;i++)d[i]=mask[i]?1e9:0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(!d[i])continue;let v=d[i];
+    if(x>0)v=Math.min(v,d[i-1]+1);if(y>0){v=Math.min(v,d[i-W]+1);if(x>0)v=Math.min(v,d[i-W-1]+S);if(x<W-1)v=Math.min(v,d[i-W+1]+S);}d[i]=v;}
+  for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const i=y*W+x;if(!d[i])continue;let v=d[i];
+    if(x<W-1)v=Math.min(v,d[i+1]+1);if(y<H-1){v=Math.min(v,d[i+W]+1);if(x<W-1)v=Math.min(v,d[i+W+1]+S);if(x>0)v=Math.min(v,d[i+W-1]+S);}d[i]=v;}
+  return d;
+}
+function trace(f,W,H,T){
+  const nb=new Map(),pts=new Map();
+  const P=(t,x,y)=>{const id=(y*W+x)*2+t;if(!pts.has(id)){const i=y*W+x,v0=f[i],v1=t?f[i+W]:f[i+1];let u=(T-v0)/(v1-v0);if(!isFinite(u))u=.5;pts.set(id,t?[x,y+u]:[x+u,y]);}return id;};
+  const L=(a,b)=>{let A=nb.get(a);if(!A){A=[];nb.set(a,A);}A.push(b);let B=nb.get(b);if(!B){B=[];nb.set(b,B);}B.push(a);};
+  for(let y=0;y<H-1;y++){let i=y*W;
+    for(let x=0;x<W-1;x++,i++){
+      const code=(f[i]>=T?8:0)|(f[i+1]>=T?4:0)|(f[i+W+1]>=T?2:0)|(f[i+W]>=T?1:0);
+      if(code===0||code===15)continue;
+      switch(code){
+        case 1:case 14:L(P(1,x,y),P(0,x,y+1));break;
+        case 2:case 13:L(P(0,x,y+1),P(1,x+1,y));break;
+        case 3:case 12:L(P(1,x,y),P(1,x+1,y));break;
+        case 4:case 11:L(P(0,x,y),P(1,x+1,y));break;
+        case 6:case 9:L(P(0,x,y),P(0,x,y+1));break;
+        case 7:case 8:L(P(1,x,y),P(0,x,y));break;
+        case 5:case 10:{const ctr=(f[i]+f[i+1]+f[i+W]+f[i+W+1])/4>=T;
+          if((code===5)===ctr){L(P(1,x,y),P(0,x,y));L(P(0,x,y+1),P(1,x+1,y));}
+          else{L(P(0,x,y),P(1,x+1,y));L(P(1,x,y),P(0,x,y+1));}break;}
+      }
+    }
+  }
+  const seen=new Set(),loops=[];
+  for(const [s] of nb){if(seen.has(s))continue;const loop=[];let prev=-1,cur=s;
+    for(;;){seen.add(cur);loop.push(pts.get(cur));const n=nb.get(cur);if(n.length<2)break;const nx=n[0]!==prev?n[0]:n[1];if(nx===s||seen.has(nx))break;prev=cur;cur=nx;}
+    if(loop.length>3)loops.push(loop);}
+  return loops;
+}
+function rdp(p,eps){const n=p.length;if(n<3)return p.slice();const keep=new Uint8Array(n);keep[0]=keep[n-1]=1;const st=[[0,n-1]];
+  while(st.length){const [a,b]=st.pop();const ax=p[a][0],ay=p[a][1],dx=p[b][0]-ax,dy=p[b][1]-ay,len=Math.hypot(dx,dy)||1e-9;let md=0,mi=-1;
+    for(let i=a+1;i<b;i++){const d=Math.abs((p[i][0]-ax)*dy-(p[i][1]-ay)*dx)/len;if(d>md){md=d;mi=i;}}
+    if(md>eps){keep[mi]=1;st.push([a,mi],[mi,b]);}}
+  return p.filter((_,i)=>keep[i]);}
+function simplifyLoop(loop,eps){let far=0,fd=0;const p0=loop[0];
+  loop.forEach((q,i)=>{const d=(q[0]-p0[0])**2+(q[1]-p0[1])**2;if(d>fd){fd=d;far=i;}});
+  const A=rdp(loop.slice(0,far+1),eps),B=rdp(loop.slice(far).concat([loop[0]]),eps);return A.concat(B.slice(1,-1));}
+function area(l){let a=0;for(let i=0,j=l.length-1;i<l.length;j=i++)a+=(l[j][0]+l[i][0])*(l[j][1]-l[i][1]);return a/2;}
+function toPath(loops,cx,cy,k){let d='';
+  for(const l of loops){if(Math.abs(area(l))<3)continue;const s=simplifyLoop(l,.3);if(s.length<3)continue;
+    d+='M'+s.map(q=>((q[0]-cx)*k).toFixed(2)+' '+((q[1]-cy)*k).toFixed(2)).join('L')+'Z';}
+  return d;}
+
+function build(src,opt){
+  const {field:f,W,H}=src,T=src.T??.5,N=W*H;
+  const C=comps(f,W,H,T,true);
+  if(C.sizes.length<2)return null;
+  let main=1;for(let l=2;l<C.sizes.length;l++)if(C.sizes[l]>C.sizes[main])main=l;
+  let cx,cy,baseR;
+  if(src.center){[cx,cy]=src.center;baseR=src.baseRpx;}
+  else{const m=new Uint8Array(N);for(let i=0;i<N;i++)m[i]=C.lab[i]===main?1:0;const d=distT(m,W,H);let bi=0;for(let i=0;i<N;i++)if(d[i]>d[bi])bi=i;cx=bi%W;cy=(bi-cx)/W;baseR=d[bi];}
+  let o2=0;for(let i=0;i<N;i++)if(C.lab[i]===main){const x=i%W,y=(i-x)/W,r=(x-cx)**2+(y-cy)**2;if(r>o2)o2=r;}
+  const outPx=Math.sqrt(o2)+.5;
+  const k=opt.D>0?(opt.D/2)/outPx:1/src.pxmm;
+  const mf=new Float32Array(f),isf=new Float32Array(N);let nIsl=0;const minIsl=Math.max(4,.5/(k*k));
+  for(let l=1;l<C.sizes.length;l++)if(l!==main&&C.sizes[l]>=minIsl)nIsl++;
+  for(let i=0;i<N;i++){const l=C.lab[i];if(l&&l!==main){mf[i]=0;if(C.sizes[l]>=minIsl)isf[i]=f[i];}}
+  if(opt.circle){const r=baseR*.985;const x0=Math.max(0,Math.floor(cx-r-2)),x1=Math.min(W-1,Math.ceil(cx+r+2)),y0=Math.max(0,Math.floor(cy-r-2)),y1=Math.min(H-1,Math.ceil(cy+r+2));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const v=Math.min(1,Math.max(0,r-Math.hypot(x-cx,y-cy)+.5));const i=y*W+x;if(v>mf[i])mf[i]=v;}}
+  if(opt.fillHoles){const B=comps(mf,W,H,T,false),minH=2/(k*k);
+    for(let i=0;i<N;i++){const l=B.lab[i];if(l&&!B.border[l]&&B.sizes[l]<minH)mf[i]=1;}}
+  const d=toPath(trace(mf,W,H,T),cx,cy,k);
+  const di=nIsl?toPath(trace(isf,W,H,T),cx,cy,k):'';
+  return {d,di,Rout:outPx*k,Rbase:baseR*k,nIsl};
+}
+
+/* ---------------- Viewer ---------------- */
+let cur=null,rot=0,scenes=[],playing=false;
+const holeD=()=>Math.max(1,+$('#optHole').value||8);
+const targetD=()=>Math.max(40,+$('#optD').value||200);
+function show(res,sc){
+  cur=res;scenes=sc||[];
+  if(!res){$('#wallPath').setAttribute('d','');$('#discPath').setAttribute('d','');$('#discIsl').setAttribute('d','');$('#facts').textContent='';$('#warn').innerHTML='';caption();return;}
+  $('#wallPath').setAttribute('d',res.d);$('#discPath').setAttribute('d',res.d);$('#discIsl').setAttribute('d',res.di);
+  $('#discHole').setAttribute('r',holeD()/2);
+  const Ro=res.Rout,Rb=res.Rbase,m=Ro+4;
+  $('#disc').setAttribute('viewBox',`${-m} ${-m} ${2*m} ${2*m}`);
+  const y0=-Ro-3,y1=-Rb+Math.max(8,(Ro-Rb)*.42),h=y1-y0,w=h*1.75;
+  $('#wall').setAttribute('viewBox',`${-w/2} ${y0} ${w} ${h}`);
+  const win=$('#discWin');win.setAttribute('x',-w/2);win.setAttribute('y',y0);win.setAttribute('width',w);win.setAttribute('height',h);
+  const t=Math.max(1.2,Rb*.05);$('#discMark').setAttribute('d',`M0 ${-Rb+2}l${t} ${t*1.8}h${-2*t}z`);
+  $('#facts').innerHTML=`<b>Ø ${(2*Ro).toFixed(0)} mm</b> gesamt · Grundscheibe Ø ${(2*Rb).toFixed(0)} mm · Figuren bis ${(Ro-Rb).toFixed(0)} mm hoch`;
+  $('#warn').innerHTML=res.nIsl?`<div class="warn">⚠ ${res.nIsl} ${res.nIsl>1?'lose Teile':'loses Teil'} (rot) würde${res.nIsl>1?'n':''} herausfallen – ${res.nIsl>1?'sie werden':'es wird'} nicht exportiert.</div>`:`<div class="okmsg">✓ Alles hängt zusammen, lasertauglich.</div>`;
+  setRot(rot);
+}
+function setRot(r){rot=r;const tr=`rotate(${r})`;$('#wallRot').setAttribute('transform',tr);$('#discRot').setAttribute('transform',tr);caption();}
+function topAngle(){return mod(-rot,360);}
+function angDist(a,b){const d=mod(a-b,360);return Math.min(d,360-d);}
+function caption(){
+  const t=topAngle();$('#angleLbl').textContent=`oben: ${Math.round(t)}°`;
+  const el=$('#caption');
+  if(!cur){el.innerHTML='<span class="muted">Noch keine Scheibe – lade ein Bild oder füge Figuren hinzu.</span>';return;}
+  if(!scenes.length){el.innerHTML='<span class="muted">Wische über die Wand oder drehe die Scheibe. Der helle Bereich auf der Scheibe ist das, was an der Wand erscheint.</span>';return;}
+  let bi=0;scenes.forEach((s,i)=>{if(angDist(s.a,t)<angDist(scenes[bi].a,t))bi=i;});
+  const s=scenes[bi];el.innerHTML=`<span class="num">Szene ${bi+1}/${scenes.length}</span><b>${s.t}</b><div>${s.x}</div>`;
+  $$('#storyList li').forEach((li,i)=>li.style.opacity=i===bi?1:.62);
+}
+let anim=null;
+function animateTo(target){cancelAnimationFrame(anim);const from=rot,t0=performance.now(),dur=700;
+  const step=now=>{const u=Math.min(1,(now-t0)/dur),e=u<.5?2*u*u:1-(-2*u+2)**2/2;setRot(from+(target-from)*e);if(u<1)anim=requestAnimationFrame(step);};anim=requestAnimationFrame(step);}
+function go(dir){
+  stopPlay();const t=topAngle();
+  if(scenes.length){const sorted=[...scenes].sort((a,b)=>a.a-b.a);
+    if(dir>0){let n=sorted.find(s=>mod(s.a-t,360)>5&&mod(s.a-t,360)<=180)||sorted.reduce((b,s)=>mod(s.a-t,360)>5&&mod(s.a-t,360)<mod(b.a-t,360)?s:b,sorted[0]);
+      let best=null;for(const s of sorted){const d=mod(s.a-t,360);if(d>5&&(!best||d<mod(best.a-t,360)))best=s;}n=best||sorted[0];animateTo(rot-mod(n.a-t,360));}
+    else{let best=null;for(const s of sorted){const d=mod(t-s.a,360);if(d>5&&(!best||d<mod(t-best.a,360)))best=s;}const n=best||sorted[0];animateTo(rot+mod(t-n.a,360));}
+  }else animateTo(rot-dir*45);
+}
+function gotoAngle(a){stopPlay();const t=topAngle();let d=mod(a-t,360);if(d>180)d-=360;animateTo(rot-d);}
+function stopPlay(){playing=false;$('#play').classList.remove('on');$('#play').textContent='▶ Drehen';}
+$('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);
+$('#play').onclick=()=>{if(playing){stopPlay();return;}playing=true;$('#play').classList.add('on');$('#play').textContent='❚❚ Stopp';
+  let last=performance.now();const step=now=>{if(!playing)return;setRot(rot-(now-last)*.012);last=now;requestAnimationFrame(step);};requestAnimationFrame(step);};
+// Ziehen
+(function(){let drag=null;
+  const wall=$('#wall'),disc=$('#disc');
+  const ang=(e,el)=>{const r=el.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI;};
+  wall.addEventListener('pointerdown',e=>{if(!cur)return;stopPlay();cancelAnimationFrame(anim);const vb=wall.viewBox.baseVal;drag={el:wall,x0:e.clientX,r0:rot,mm:vb.width/wall.getBoundingClientRect().width};wall.setPointerCapture(e.pointerId);});
+  disc.addEventListener('pointerdown',e=>{if(!cur)return;stopPlay();cancelAnimationFrame(anim);drag={el:disc,a0:ang(e,disc),r0:rot};disc.setPointerCapture(e.pointerId);});
+  const move=e=>{if(!drag)return;if(drag.el===wall){const dx=(e.clientX-drag.x0)*drag.mm;setRot(drag.r0+dx/(cur.Rbase+6)*180/Math.PI);}else{let d=ang(e,disc)-drag.a0;setRot(drag.r0+d);}};
+  const up=()=>{drag=null;};
+  for(const el of [wall,disc]){el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
+})();
+
+/* ---------------- Export ---------------- */
+function svgText(){
+  if(!cur)return '';const S=Math.ceil(2*cur.Rout+4),h=S/2;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${S}mm" height="${S}mm" viewBox="${-h} ${-h} ${S} ${S}">
+<!-- Schattenrad · Ø ${(2*cur.Rout).toFixed(1)} mm · rote Haarlinie = schneiden -->
+<path d="${cur.d}" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+<circle cx="0" cy="0" r="${holeD()/2}" fill="none" stroke="#ff0000" stroke-width="0.1"/>
+</svg>`;}
+function fileName(){return `schattenrad-${state.tab}-${Math.round(2*(cur?cur.Rout:0))}mm.svg`;}
+const status=t=>{$('#status').textContent=t;};
+$('#dl').onclick=()=>{if(!cur)return;try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([svgText()],{type:'image/svg+xml'}));a.download=fileName();document.body.appendChild(a);a.click();a.remove();status('Download gestartet. Wenn nichts passiert (z. B. in der Claude-Vorschau): „SVG kopieren“.');}catch(e){status('Download blockiert – nutze „SVG kopieren“.');}};
+$('#cp').onclick=async()=>{if(!cur)return;const t=svgText();try{await navigator.clipboard.writeText(t);status('SVG kopiert – in einen Texteditor einfügen und als .svg speichern.');}catch(e){const ta=$('#svgOut');ta.hidden=false;ta.value=t;ta.select();status('Kopieren nicht erlaubt – Text unten markieren und kopieren.');}};
+$('#optD').addEventListener('input',()=>schedule());
+$('#optHole').addEventListener('input',()=>{$('#discHole').setAttribute('r',holeD()/2);});
+
+/* ---------------- Tabs & Modi ---------------- */
+const state={tab:'geschichten'};
+let timer=null;
+function schedule(ms=140){clearTimeout(timer);timer=setTimeout(refresh,ms);}
+function refresh(){
+  const t=state.tab;
+  if(t==='geschichten'){show(build(renderScene(STORY),{D:targetD()}),STORY.scenes);}
+  else if(t==='baukasten'){show(bk.items.length?build(renderScene(bk),{D:targetD()}):build(renderScene({R:bk.R,items:[]}),{D:targetD()}),bk.scenes||[]);}
+  else if(t==='ki'){show(ki.src?buildKi():null,[]);}
+}
+function setTab(t){
+  if(!document.querySelector(`[data-panel="${t}"]`))t='geschichten';
+  state.tab=t;$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);
+  $('#grid').classList.toggle('noview',t==='prompts'||t==='tipps');
+  $('#svgOut').hidden=true;status('');
+  if(location.hash.slice(1)!==t)history.replaceState(null,'','#'+t);
+  stopPlay();refresh();
+}
+$$('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+window.addEventListener('hashchange',()=>setTab(location.hash.slice(1)));
+
+/* ---------------- ① Geschichte ---------------- */
+$('#storyList').innerHTML=STORY.scenes.map(s=>`<li data-a="${s.a}"><div><b>${s.t}</b><div class="small muted">${s.x}</div></div></li>`).join('');
+$$('#storyList li').forEach(li=>li.onclick=()=>{gotoAngle(+li.dataset.a);$('#viewer').scrollIntoView({behavior:'smooth',block:'start'});});
+$('#toBk').onclick=()=>{bk=JSON.parse(JSON.stringify(STORY));saveBk();bkRender();setTab('baukasten');};
+
+/* ---------------- ② KI-Bild ---------------- */
+const ki={src:null,gray:null,W:0,H:0};
+function loadImageFile(file,cb){const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>cb(img,url);img.onerror=()=>status('Bild konnte nicht gelesen werden.');img.src=url;}
+function grayFrom(img,maxSide){
+  const sc=Math.min(1,maxSide/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+  const w=Math.round((img.naturalWidth||img.width)*sc),h=Math.round((img.naturalHeight||img.height)*sc);
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data,g=new Float32Array(w*h);
+  for(let i=0;i<g.length;i++)g[i]=1-(.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2])/255;
+  return {g,w,h};
+}
+function boxBlur(f,W,H,r){if(!r)return f;let a=f,b=new Float32Array(W*H);
+  for(let pass=0;pass<2;pass++){
+    for(let y=0;y<H;y++){let s=0;const o=y*W;for(let x=-r;x<=r;x++)s+=a[o+Math.min(W-1,Math.max(0,x))];
+      for(let x=0;x<W;x++){b[o+x]=s/(2*r+1);s+=a[o+Math.min(W-1,x+r+1)]-a[o+Math.max(0,x-r)];}}
+    const c=new Float32Array(W*H);
+    for(let x=0;x<W;x++){let s=0;for(let y=-r;y<=r;y++)s+=b[Math.min(H-1,Math.max(0,y))*W+x];
+      for(let y=0;y<H;y++){c[y*W+x]=s/(2*r+1);s+=b[Math.min(H-1,y+r+1)*W+x]-b[Math.max(0,y-r)*W+x];}}
+    a=c;}
+  return a;}
+function buildKi(){
+  const P=6,W=ki.W+2*P,H=ki.H+2*P,inv=$('#kiInv').checked;
+  let f=new Float32Array(W*H);
+  for(let y=0;y<ki.H;y++)for(let x=0;x<ki.W;x++){const v=ki.gray[y*ki.W+x];f[(y+P)*W+x+P]=inv?1-v:v;}
+  f=boxBlur(f,W,H,+$('#kiBlur').value);
+  for(let x=0;x<W;x++){f[x]=0;f[(H-1)*W+x]=0;}for(let y=0;y<H;y++){f[y*W]=0;f[y*W+W-1]=0;}
+  return build({field:f,W,H,T:+$('#kiT').value},{D:targetD(),circle:$('#kiCircle').checked,fillHoles:$('#kiHoles').checked});
+}
+function kiSet(img,url){const r=grayFrom(img,1100);Object.assign(ki,{src:true,gray:r.g,W:r.w,H:r.h});const th=$('#kiThumb');th.src=url;th.style.display='block';schedule(10);}
+$('#kiFile').onchange=e=>{const f=e.target.files[0];if(f)loadImageFile(f,kiSet);};
+['#kiT','#kiBlur'].forEach(s=>$(s).addEventListener('input',e=>{e.target.nextElementSibling.textContent=(+e.target.value).toFixed(s==='#kiT'?2:0);schedule(160);}));
+['#kiCircle','#kiHoles','#kiInv'].forEach(s=>$(s).addEventListener('change',()=>schedule(10)));
+$('#kiDemo').onclick=()=>{ // simuliertes "KI-Bild": gerendert, leicht verrauscht, mit einem losen Vogel
+  const c=document.createElement('canvas');c.width=c.height=900;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,900,900);
+  const sc=renderScene({R:70,items:[{f:'tanne',a:0,s:1.2},{f:'tanne',a:14},{f:'haus',a:40},{f:'maus',a:62},{f:'baum',a:95},{f:'schnecke',a:125},{f:'pilz',a:150},{f:'busch',a:175},{f:'kroko',a:215},{f:'blume',a:250},{f:'blume',a:256},{f:'apfelbaum',a:290},{f:'gras',a:320},{f:'maus_staunt',a:338}]});
+  const t=document.createElement('canvas');t.width=t.height=sc.W;const tx=t.getContext('2d');const id=tx.createImageData(sc.W,sc.W);
+  for(let i=0;i<sc.field.length;i++){const v=255-Math.round(sc.field[i]*255);id.data[i*4]=id.data[i*4+1]=id.data[i*4+2]=v;id.data[i*4+3]=255;}tx.putImageData(id,0,0);
+  x.drawImage(t,0,0,900,900);x.fillStyle='#111';x.beginPath();x.ellipse(690,140,16,6,-.3,0,7);x.ellipse(712,128,14,5,.5,0,7);x.fill();
+  for(let i=0;i<500;i++){x.fillStyle=Math.random()<.5?'#bbb':'#555';x.fillRect(Math.random()*900,Math.random()*900,2,2);}
+  const img=new Image();img.onload=()=>kiSet(img,c.toDataURL());img.src=c.toDataURL();
+};
+
+/* ---------------- Szenen-Bild → Rad ---------------- */
+function splitScenes(g,W,H){
+  const T=.5,C=comps(g,W,H,T,true),n=C.sizes.length;
+  const bb=[];for(let l=0;l<n;l++)bb.push([W,H,-1,-1]);
+  for(let i=0;i<W*H;i++){const l=C.lab[i];if(!l)continue;const x=i%W,y=(i-x)/W,b=bb[l];if(x<b[0])b[0]=x;if(y<b[1])b[1]=y;if(x>b[2])b[2]=x;if(y>b[3])b[3]=y;}
+  const labels=[...Array(n).keys()].slice(1).sort((a,b)=>C.sizes[b]-C.sizes[a]);
+  const minBig=Math.max(W*H*.0015,(C.sizes[labels[0]]||0)*.2);const big=labels.filter(l=>C.sizes[l]>=minBig).slice(0,12);
+  const sc=big.map(l=>({labs:new Set([l]),b:bb[l].slice()}));
+  const pad=Math.round(Math.min(W,H)*.02);
+  for(const l of labels){if(big.includes(l)||C.sizes[l]<3)continue;const b=bb[l],cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;
+    const t=sc.find(q=>cx>=q.b[0]-pad&&cx<=q.b[2]+pad&&cy>=q.b[1]-pad&&cy<=q.b[3]+pad);
+    if(t){t.labs.add(l);t.b=[Math.min(t.b[0],b[0]),Math.min(t.b[1],b[1]),Math.max(t.b[2],b[2]),Math.max(t.b[3],b[3])];}}
+  // Lesereihenfolge: Zeilen nach Bodenlinie, dann links→rechts
+  const hAvg=sc.reduce((a,q)=>a+q.b[3]-q.b[1],0)/Math.max(1,sc.length);
+  sc.sort((p,q)=>p.b[3]-q.b[3]);const rows=[];
+  for(const q of sc){const r=rows.find(r=>Math.abs(r.y-q.b[3])<hAvg*.5);if(r)r.it.push(q);else rows.push({y:q.b[3],it:[q]});}
+  return {C,scenes:rows.flatMap(r=>r.it.sort((p,q)=>p.b[0]-q.b[0]))};
+}
+function sceneMask(g,W,C,q){
+  const [x0,y0,x1,y1]=q.b,w=x1-x0+1,h=y1-y0+1,c=document.createElement('canvas');c.width=w;c.height=h;
+  const cx=c.getContext('2d'),id=cx.createImageData(w,h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y+y0)*W+x+x0,l=C.lab[i];if(l&&!q.labs.has(l))continue;
+    id.data[(y*w+x)*4+3]=Math.round(255*Math.min(1,Math.max(0,(g[i]-.35)/.3)));}
+  cx.putImageData(id,0,0);return {url:c.toDataURL(),w,h};
+}
+function scenesToWheel(img){
+  const r=grayFrom(img,1600),{C,scenes}=splitScenes(r.g,r.w,r.h);
+  if(scenes.length<2){$('#scInfo').textContent=`Nur ${scenes.length} Szene gefunden. Stehen die Szenen mit weißem Abstand auf eigenen Bodenbalken?`;return;}
+  const R0=88,n=scenes.length,arc=2*Math.PI*R0/n*.9,hmax=+$('#scH').value;
+  const masks=scenes.map(q=>sceneMask(r.g,r.w,C,q));
+  const k=Math.min(...masks.map(m=>Math.min(arc/m.w,hmax/m.h)));
+  // alte Szenen-Figuren aufräumen
+  for(const id of Object.keys(custom))if(custom[id].warp)delete custom[id];
+  const stamp=Date.now().toString(36),items=[],sc=[];let done=0;
+  masks.forEach((m,i)=>{const id=`s${stamp}_${i}`,a=i*360/n;
+    items.push({f:id,a});sc.push({a,t:`Szene ${i+1}`,x:'Aus deinem Szenen-Bild. Erzähl einfach los!'});
+    addCustom(id,`Szene ${i+1}`,m.url,m.w/m.h,()=>{if(++done===n){bk={R:R0,items,scenes:sc};saveCustom();saveBk();bkRender();setTab('baukasten');setRot(0);
+      status(`${n} Szenen erkannt und auf dem Rad verteilt.`);}},{warp:true,hmm:m.h*k});});
+  $('#scInfo').textContent=`${n} Szenen erkannt (Lesereihenfolge: Zeilen von oben, je links → rechts).`;
+}
+$('#scFile').onchange=e=>{const f=e.target.files[0];if(f)loadImageFile(f,img=>scenesToWheel(img));e.target.value='';};
+$('#scH').addEventListener('input',e=>e.target.nextElementSibling.textContent=e.target.value+' mm');
+$('#scDemo').onclick=()=>{ // simuliertes KI-Szenenraster aus der Bibliothek
+  const c=document.createElement('canvas');c.width=1500;c.height=1000;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,1500,1000);x.fillStyle='#000';x.strokeStyle='#000';
+  const F=makeF(x),P=[
+    [['haus',-14],['blume',3],['wandermaus',16]],
+    [['tanne',-18],['pilz',-6],['wandermaus',6],['schnecke',18]],
+    [['maus_staunt',-16],['kroko_wasser',8,1,true]],
+    [['maus_rennt',-14,1,true],['kroko_auf',14,.8,true]],
+    [['apfelbaum',-17],['maus_apfel',-5],['kroko_apfel',16,.75,true]],
+    [['kroko',2,.85],['maus',0,.8,false,5],['gras',-22],['gras',24]]];
+  P.forEach((sc,i)=>{const ox=250+(i%3)*500,oy=430+Math.floor(i/3)*470,u=6.5;
+    x.save();x.translate(ox,oy);x.scale(u,u);F.r(-27,0,54,3.2,1);
+    for(const [f,dx,s=1,fl=false,lift=0] of sc){x.save();x.translate(dx,-lift+.3);x.scale(fl?-s:s,s);FIG[f].draw(F);x.restore();}
+    x.restore();});
+  x.beginPath();x.ellipse(1300,120,20,7,-.3,0,7);x.fill(); // ein schwebender Vogel
+  const img=new Image();img.onload=()=>scenesToWheel(img);img.src=c.toDataURL();
+};
+
+/* ---------------- ③ Baukasten ---------------- */
+let bk;
+function saveBk(){try{localStorage.setItem('schattenrad-bk',JSON.stringify(bk));}catch(e){}}
+function saveCustom(){try{localStorage.setItem('schattenrad-custom',JSON.stringify(Object.fromEntries(Object.entries(custom).map(([k,v])=>[k,{label:v.label,url:v.url,aspect:v.aspect,warp:v.warp,hmm:v.hmm}]))));}catch(e){status('Hinweis: Browser-Speicher voll – eigene Figuren bleiben nur bis zum Neuladen.');}}
+function addCustom(id,label,url,aspect,cb,o={}){
+  const img=new Image();img.onload=()=>{const h=o.hmm||24,w=h*aspect;
+    custom[id]={label:'★ '+label,url,aspect,img,h,w,warp:!!o.warp,hmm:o.hmm,pad:[-w/2,w/2],draw(F){F.ctx.drawImage(img,-w/2,-h,w,h);}};fillAddSel();cb&&cb();};img.src=url;}
+try{bk=JSON.parse(localStorage.getItem('schattenrad-bk'));}catch(e){}
+if(!bk||!Array.isArray(bk.items))bk=JSON.parse(JSON.stringify(STORY));
+try{const cs=JSON.parse(localStorage.getItem('schattenrad-custom')||'{}');for(const [k,v] of Object.entries(cs))addCustom(k,v.label.replace(/^★ /,''),v.url,v.aspect,()=>{bkRender();if(state.tab==='baukasten')schedule(10);},{warp:v.warp,hmm:v.hmm});}catch(e){}
+function figOptions(sel){const all=[...Object.entries(FIG),...Object.entries(custom)];return all.map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v.label}</option>`).join('');}
+function fillAddSel(){$('#bkAddSel').innerHTML=`<option value="__wellen">Wellen-Reihe (Fluss)</option>`+figOptions('wandermaus');}
+function bkRender(){
+  $('#bkR').value=bk.R;$('#bkR').nextElementSibling.textContent=bk.R;
+  $('#bkItems').innerHTML=bk.items.map((it,i)=>`<div class="item" data-i="${i}">
+    <div class="r1"><select data-k="f">${figOptions(it.f)}</select>
+      <button class="btn sm" data-act="go" title="Nach oben drehen">◎</button>
+      <button class="btn sm ${it.flip?'on':''}" data-act="flip" title="Spiegeln">⇋</button>
+      <button class="btn sm" data-act="dup" title="Duplizieren">⧉</button>
+      <button class="btn sm" data-act="del" title="Löschen">✕</button></div>
+    <label>${it.to!=null?'von':'Position'} <input type="range" min="0" max="359" step="0.5" data-k="a" value="${mod(it.a,360)}"><output>${Math.round(mod(it.a,360))}°</output></label>
+    ${it.to!=null?`<label>bis <input type="range" min="0" max="359" step="0.5" data-k="to" value="${mod(it.to,360)}"><output>${Math.round(mod(it.to,360))}°</output></label>`:''}
+    <label>Größe <input type="range" min="0.4" max="2" step="0.05" data-k="s" value="${it.s||1}"><output>${(it.s||1).toFixed(2)}</output></label>
+    <label>Anheben <input type="range" min="0" max="25" step="0.5" data-k="lift" value="${it.lift||0}"><output>${it.lift||0}</output></label>
+  </div>`).join('');
+}
+$('#bkItems').addEventListener('input',e=>{const row=e.target.closest('.item');if(!row)return;const it=bk.items[+row.dataset.i],k=e.target.dataset.k;
+  if(k==='f'){it.f=e.target.value;}
+  else{const v=+e.target.value;it[k]=v;const o=e.target.nextElementSibling;if(o)o.textContent=k==='s'?v.toFixed(2):(k==='a'||k==='to')?Math.round(v)+'°':v;
+    if(k==='a'||k==='to'){if(k==='a'&&it.to!=null&&it.to<v)it.to+=360;setRot(-v);}}
+  saveBk();schedule();});
+$('#bkItems').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const row=b.closest('.item'),i=+row.dataset.i,it=bk.items[i];
+  if(b.dataset.act==='del')bk.items.splice(i,1);
+  else if(b.dataset.act==='flip')it.flip=!it.flip;
+  else if(b.dataset.act==='dup')bk.items.splice(i+1,0,{...it,a:it.a+8,to:it.to!=null?it.to+8:undefined});
+  else if(b.dataset.act==='go'){gotoAngle(it.to!=null?(it.a+it.to)/2:it.a);return;}
+  saveBk();bkRender();schedule(10);});
+$('#bkAdd').onclick=()=>{const v=$('#bkAddSel').value,t=Math.round(topAngle());
+  if(v==='__wellen')bk.items.unshift({f:'welle',a:mod(t-15,360),to:mod(t-15,360)+30,step:5});else bk.items.push({f:v,a:t});
+  saveBk();bkRender();schedule(10);status('Hinzugefügt bei '+t+'°.');};
+$('#bkR').addEventListener('input',e=>{bk.R=+e.target.value;e.target.nextElementSibling.textContent=bk.R;saveBk();schedule();});
+$('#bkStory').onclick=()=>{bk=JSON.parse(JSON.stringify(STORY));saveBk();bkRender();schedule(10);};
+$('#bkEmpty').onclick=()=>{bk={R:88,items:[],scenes:[]};saveBk();bkRender();schedule(10);};
+$('#bkFile').onchange=e=>{const file=e.target.files[0];if(!file)return;loadImageFile(file,img=>{
+  const r=grayFrom(img,700);let x0=r.w,y0=r.h,x1=-1,y1=-1;
+  for(let y=0;y<r.h;y++)for(let x=0;x<r.w;x++)if(r.g[y*r.w+x]>.5){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(x1<0){status('Keine dunkle Figur gefunden.');return;}
+  const w=x1-x0+1,h=y1-y0+1,c=document.createElement('canvas');c.width=w;c.height=h;const cx=c.getContext('2d'),id=cx.createImageData(w,h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const v=r.g[(y+y0)*r.w+x+x0];const a=Math.min(1,Math.max(0,(v-.35)/.3));id.data[(y*w+x)*4+3]=Math.round(a*255);}
+  cx.putImageData(id,0,0);const cid='c'+Date.now().toString(36),name=file.name.replace(/\.[^.]+$/,'').slice(0,24);
+  addCustom(cid,name,c.toDataURL(),w/h,()=>{saveCustom();bk.items.push({f:cid,a:Math.round(topAngle())});saveBk();bkRender();schedule(10);status('Eigene Figur „'+name+'“ eingefügt.');});
+});e.target.value='';};
+fillAddSel();bkRender();
+
+/* ---------------- Prompts ---------------- */
+const STYLE='Every shape is solid pure black (#000) on pure white, chunky and simple like a picture book for a 3-year-old, side-view profiles, all figures firmly attached to the disc, no floating parts, no thin lines, no gray, no gradients, no shading, no text, no frame. Square image.';
+const PROMPTS=[
+ {h:'A · Ganze Scheibe – „Die Wandermaus“',tags:['für ②'],p:`Laser-cut stencil design, flat top-down view, pure white background. In the center one solid black circle (a disc) filling about 55% of the image. Around the outer edge of the disc, black silhouettes stand ON the rim and point outward, like a tiny round planet, every figure upright relative to the circle edge. Going clockwise from the top: a small cottage and flowers, a little mouse walking with a bundle on a stick over its shoulder, fir trees with a mushroom and a snail, a river with waves and a crocodile's eyes peeking out, a crocodile opening its jaws while the mouse runs away, an apple tree with the mouse holding up an apple, the mouse riding on the smiling crocodile's back across the waves. ${STYLE}`},
+ {h:'B · Ganze Scheibe – „Der kleine Igel sucht den Mond“',tags:['für ②'],p:`Laser-cut stencil design, flat top-down view, pure white background. One solid black circle in the center filling about 55% of the image. Around the outer edge of the disc, silhouettes stand on the rim and point outward like on a tiny planet: a hedgehog waking up next to a tree stump, the hedgehog asking an owl on a fence post, a pond with a frog on a lily pad, a tall hill with the hedgehog on top reaching up to a crescent moon that rests on the hilltop, the hedgehog sleeping curled up in leaves. ${STYLE}`},
+ {h:'C · Ganze Scheibe – „Bauernhof am Morgen“',tags:['für ②'],p:`Laser-cut stencil design, flat top-down view, pure white background. One solid black circle in the center filling about 55% of the image. Around the edge, silhouettes stand on the rim pointing outward: a barn with a rooster on the roof, a cow, a pig in a puddle, a tractor, three ducks in a row, a sheep, a farmhouse with a round window. Leave clear gaps between the scenes. ${STYLE}`},
+ {h:'F · Szenen-Raster (für „Szenen-Bild → Rad“)',tags:['für ②','empfohlen'],p:`A 3x2 grid of six separate small scenes on a pure white background, with wide white gaps between the scenes. Each scene is a solid black silhouette vignette standing on its own short, thick, straight black ground bar, and everything in a scene touches that bar or its figures, nothing floating. Scenes in reading order (left to right, top to bottom):
+1. a little mouse with a bundle on a stick leaving a small cottage with flowers
+2. the mouse walking through fir trees past a mushroom and a snail
+3. the mouse standing surprised at a river bank, a crocodile's eyes peeking out of the waves
+4. the crocodile opening its big jaws, the mouse running away
+5. the mouse holding up an apple under an apple tree, the crocodile with the apple in its mouth
+6. the mouse riding on the smiling crocodile's back across the waves
+Chunky simple picture-book shapes for a 3-year-old, side view, small round white eye holes, no thin lines, no gray, no shading, no text, no frames around the scenes.`},
+ {h:'D · Einzelfigur (Vorlage für den Baukasten)',tags:['für ③','am zuverlässigsten'],p:`Single solid black silhouette of [FIGUR], side view, standing on a flat horizontal ground line, centered on a pure white background. Chunky simple shapes for a laser-cut shadow puppet for a toddler, one small round eye left white as a hole, no thin lines thinner than the eye, no gray, no shading, no text, no cast shadow, nothing floating.`},
+ {h:'Ideen für [FIGUR] – passend zur Mausgeschichte',tags:['für ③'],p:`a little mouse waving with one hand
+a little mouse sleeping in a tiny bed
+a friendly crocodile with a toothbrush
+a crocodile swimming, only head and back above small waves
+a small wooden rowing boat on waves with a mouse inside
+a frog jumping
+a tall sunflower with a ladybug on a leaf
+a hedgehog carrying an apple on its back
+an owl sitting on a tree stump
+a hot air balloon tied to the ground with ropes`},
+ {h:'E · Szenen-Streifen (Alternative)',tags:['für ③'],p:`Wide horizontal strip, solid black silhouettes on pure white, all standing on one straight black ground bar along the bottom: [SZENE, z. B. a mouse meets a crocodile at a river]. Chunky toddler picture-book style, side view, everything connected to the ground bar, small round white eye holes, no gray, no text.`},
+];
+$('#promptList').innerHTML=PROMPTS.map((q,i)=>`<div class="ph"><h3>${q.h}</h3><button class="btn sm" data-copy="${i}">Kopieren</button></div><div>${q.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div><div class="prompt">${q.p.replace(/</g,'&lt;')}</div>`).join('')+
+ `<h3>Tipps</h3><ul class="tight small"><li>Den Streifen (E) kannst du als „eigene Figur“ hochladen und mit Größe 1,5–2 auf den Rand setzen. Bei kleinem Radius sitzt er wegen der Krümmung aber nicht ganz sauber auf.</li><li>Bildmodelle verwechseln gern innen und außen. Steht etwas kopfüber, „all figures stand on the circle edge with their feet touching the disc“ ergänzen.</li><li>Sterne und Vögel werden oft frei schwebend gezeichnet. Die rote Markierung in ② zeigt sie dir.</li></ul>`;
+$('#promptList').addEventListener('click',async e=>{const b=e.target.closest('[data-copy]');if(!b)return;const t=PROMPTS[+b.dataset.copy].p;
+  try{await navigator.clipboard.writeText(t);b.textContent='Kopiert ✓';}catch(err){const r=document.createRange();r.selectNodeContents(b.parentElement.nextElementSibling.nextElementSibling);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Markiert';}
+  setTimeout(()=>b.textContent='Kopieren',1600);});
+
+/* ---------------- Start ---------------- */
+setTab(location.hash.slice(1)||'geschichten');
+</script>
+</body>
+</html>
