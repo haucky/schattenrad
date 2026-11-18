@@ -12,7 +12,9 @@ Eine runde Scheibe mit Silhouetten am Rand, ein Bleistift als Achse, eine Tasche
 - **② KI-Bild → SVG** – ein rundes Schwarz-Weiß-Bild vektorisieren, die Mitte finden, skalieren, Mittelloch setzen, lose Teile markieren.
 - **② Szenen-Bild → Rad** – ein KI-Bild mit 4–8 einzelnen Szenen: Die Szenen werden automatisch erkannt, ausgeschnitten, in Lesereihenfolge sortiert und entlang des Kreisbogens gebogen.
 - **③ Baukasten** – Figuren aus der Bibliothek oder eigene KI-Figuren frei auf dem Rand platzieren.
-- **Prompts** für Nano Banana & Co. sowie Bau- und Lichttipps.
+- **④ Mathe-Kreise** – fünf generative Spitzen-Muster (Spirograph, Maurer-Rose, Voronoi-Zellen, Sonnenblume/Phyllotaxis, Guilloche) mit Reglern und Zufallsknopf. Gedacht für die Lampe mittig hinter der Scheibe, gut geeignet für dünnen Karton.
+- **Lose Teile** werden rot markiert und lassen sich per Knopf entfernen oder automatisch mit 1,6-mm-Stegen anbinden.
+- **Prompts** für Nano Banana & Co. (auch filigrane Scherenschnitt-Szenen für Erwachsene) sowie Bau- und Lichttipps.
 
 Export: SVG in Millimetern, rote Haarlinie (0,1 mm) = Schnitt, Standard Ø 200 mm, 8-mm-Loch für einen Bleistift.
 
@@ -22,3 +24,5 @@ Alles steckt in einer einzigen `index.html` ohne Build-Schritt und ohne Abhängi
 **Settings → Pages → Deploy from a branch → `main` / root**.
 
 `beispiele/wandermaus-200mm.svg` ist die fertige Schneidedatei der Wandermaus.
+
+![Mathe-Kreise](beispiele/vorschau-mathe-kreise.png)

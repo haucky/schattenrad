@@ -60,10 +60,16 @@ textarea.out{width:100%;height:110px;background:var(--night);color:var(--paper);
 .item.sel{border-color:var(--lamp)}
 .item .r1{display:flex;gap:6px;align-items:center;margin-bottom:4px}
 .item select,.addrow select{flex:1;min-width:0;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px;font:14px system-ui}
-.item label,.sl{display:grid;grid-template-columns:78px 1fr 44px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.item label,.sl{display:grid;grid-template-columns:96px 1fr 54px;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
 .item output,.sl output{text-align:right;color:var(--paper);font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--lamp)}
 .addrow{display:flex;gap:6px;margin-top:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.chips button{border:1px solid var(--line);background:var(--panel2);color:var(--paper);padding:7px 12px;border-radius:999px;font:500 13.5px Fredoka,system-ui;cursor:pointer}
+.chips button.on{background:var(--lamp);color:#2a1d08;border-color:var(--lamp)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--panel2);color:var(--muted);padding:7px 10px;font:500 13px system-ui;cursor:pointer}
+.seg button.on{background:var(--lamp2);color:#2a1d08}
 .chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:6px 0}
 .drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer}
 .drop:hover{border-color:var(--lamp);color:var(--paper)}
@@ -91,6 +97,7 @@ ul.tight li{margin:3px 0}
   <button data-tab="geschichten">① Fertige Geschichte</button>
   <button data-tab="ki">② KI-Bild → SVG</button>
   <button data-tab="baukasten">③ Baukasten</button>
+  <button data-tab="mathe">④ Mathe-Kreise</button>
   <button data-tab="prompts">Prompts</button>
   <button data-tab="tipps">Bauen &amp; Ideen</button>
 </nav>
@@ -114,7 +121,8 @@ ul.tight li{margin:3px 0}
     <button class="btn" id="prev" title="Vorherige Szene">◀</button>
     <button class="btn" id="play" title="Langsam drehen">▶ Drehen</button>
     <button class="btn" id="next" title="Nächste Szene">▶▶</button>
-    <span class="muted small" style="margin-left:auto" id="angleLbl">0°</span>
+    <span class="seg" style="margin-left:auto" title="Wo steht die Lampe?"><button data-wm="rand">Rand</button><button data-wm="ganz">Ganz</button></span>
+    <span class="muted small" id="angleLbl">0°</span>
   </div>
   <div id="caption"></div>
   <div class="discRow">
@@ -219,6 +227,27 @@ ul.tight li{margin:3px 0}
   </div>
 </section>
 
+<!-- ④ Mathe -->
+<section data-panel="mathe" hidden>
+  <div class="card">
+    <h2>Mathe-Kreise</h2>
+    <p class="muted small" style="margin:0 0 4px">Generative Muster als Laser-Spitze. Die Lampe steht mittig hinter der Scheibe („Ganz“): Licht fällt durch die Löcher, und beim Drehen kreist das Muster über Wand und Decke, wie bei einer Sternenlampe.</p>
+    <div class="chips" id="genChips"></div>
+    <p id="genDesc" class="small muted" style="margin:4px 0 8px"></p>
+    <div id="genParams"></div>
+    <div class="exp"><button class="btn pri" id="genRand">🎲 Zufall</button><button class="btn" id="genReset">Standardwerte</button></div>
+  </div>
+  <div class="card small">
+    <h2>Filigran schneiden</h2>
+    <ul class="tight">
+      <li><b>Dünner Karton</b> (Fotokarton 300–400 g/m², 0,3–0,5 mm): Stege ab etwa 0,6 mm halten. 3-mm-Holz braucht eher 1,2 mm und mehr.</li>
+      <li>Wenig Leistung, hohe Geschwindigkeit, Air Assist an. Karton mit Kreppband oder Magneten flach halten, sonst verzieht er sich bei vielen Löchern.</li>
+      <li>Muster mit Hunderten Löchern brauchen lange: im Laserprogramm „Innere zuerst“ und Pfadoptimierung einschalten.</li>
+      <li>Je mehr Speichen und Ringe, desto stabiler. Bei Karton die Randbreite nicht unter 3 mm stellen.</li>
+    </ul>
+  </div>
+</section>
+
 <!-- Prompts -->
 <section data-panel="prompts" hidden>
   <div class="card" id="promptCard">
@@ -245,6 +274,7 @@ ul.tight li{margin:3px 0}
     <h2>Option ③ – weitergedacht</h2>
     <p class="muted small" style="margin:0 0 4px">Der Baukasten ist der erste Schritt: Szenen aus Einzelteilen statt einem großen KI-Bild. Diese Ideen gehen noch weiter:</p>
     <div class="idea"><div class="ic">🧩</div><div><b>KI nur für Figuren, nicht für die Szene</b><p class="small muted">Die KI macht einzelne Silhouetten (Maus winkt, Elefant spritzt), du setzt sie im Baukasten auf den Rand. Ausrichtung, Abstände und Verbindungen stimmen dann immer. Ist schon eingebaut.</p></div></div>
+    <div class="idea"><div class="ic">🌀</div><div><b>Mathe-Kreise als Sternenlampe</b><p class="small muted">Die Lampe steht mittig dahinter, und das ganze Muster dreht sich über Wand und Decke. Zwei verschiedene Muster hintereinander gedreht ergeben bewegte Moiré-Effekte.</p></div></div>
     <div class="idea"><div class="ic">🌗</div><div><b>Zwei Scheiben auf einem Stift</b><p class="small muted">Vorne die Landschaft mit Figuren, dahinter ein größerer Ring mit Fenstern für Mond, Sterne und Wolken. Beide drehen unabhängig, so wird es Tag und Nacht, und Bewegung entsteht ganz von allein.</p></div></div>
     <div class="idea"><div class="ic">🎨</div><div><b>Farbfenster</b><p class="small muted">Fenster, Augen oder ein ausgeschnittener Fluss werden mit Transparentpapier beklebt und leuchten bunt an der Wand. Das kann deine Tochter selbst machen.</p></div></div>
     <div class="idea"><div class="ic">🐊</div><div><b>Wackelteile</b><p class="small muted">Das Krokodilmaul extra schneiden und mit einer Musterbeutelklammer drehbar befestigen. Mit einem Faden klappt es dann „Schnapp!“.</p></div></div>
@@ -530,9 +560,30 @@ function build(src,opt){
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const v=Math.min(1,Math.max(0,r-Math.hypot(x-cx,y-cy)+.5));const i=y*W+x;if(v>mf[i])mf[i]=v;}}
   if(opt.fillHoles){const B=comps(mf,W,H,T,false),minH=2/(k*k);
     for(let i=0;i<N;i++){const l=B.lab[i];if(l&&!B.border[l]&&B.sizes[l]<minH)mf[i]=1;}}
+  const mode=opt.islands||'show';let bridged=0;
+  if(mode==='bridge'&&nIsl)bridged=bridgeIslands(mf,f,C,main,minIsl,W,H,Math.max(2,1.6/k));
   const d=toPath(trace(mf,W,H,T),cx,cy,k);
-  const di=nIsl?toPath(trace(isf,W,H,T),cx,cy,k):'';
-  return {d,di,Rout:outPx*k,Rbase:baseR*k,nIsl};
+  const di=nIsl&&mode==='show'?toPath(trace(isf,W,H,T),cx,cy,k):'';
+  return {d,di,Rout:outPx*k,Rbase:baseR*k,nIsl,mode,bridged};
+}
+
+function bridgeIslands(mf,f,C,main,minIsl,W,H,wpx){
+  // nächster Pixel der Hauptscheibe für jeden Pixel (Feature-Transformation, 2 Durchläufe)
+  const N=W*H,near=new Int32Array(N).fill(-1),dd=new Float64Array(N).fill(1e18);
+  for(let i=0;i<N;i++)if(C.lab[i]===main){dd[i]=0;near[i]=i;}
+  const upd=(i,j)=>{const n=near[j];if(n<0)return;const xi=i%W,yi=(i-xi)/W,xn=n%W,yn=(n-xn)/W,d=(xi-xn)**2+(yi-yn)**2;if(d<dd[i]){dd[i]=d;near[i]=n;}};
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(x>0)upd(i,i-1);if(y>0){upd(i,i-W);if(x>0)upd(i,i-W-1);if(x<W-1)upd(i,i-W+1);}}
+  for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const i=y*W+x;if(x<W-1)upd(i,i+1);if(y<H-1){upd(i,i+W);if(x<W-1)upd(i,i+W+1);if(x>0)upd(i,i+W-1);}}
+  const best=new Map();
+  for(let i=0;i<N;i++){const l=C.lab[i];if(!l||l===main||C.sizes[l]<minIsl)continue;mf[i]=f[i];const b=best.get(l);if(!b||dd[i]<b[0])best.set(l,[dd[i],i,near[i]]);}
+  const r=wpx/2;
+  for(const [,[,p,q]] of best){if(q<0)continue;
+    let ax=p%W,ay=(p-ax)/W,bx=q%W,by=(q-bx)/W;const L=Math.hypot(bx-ax,by-ay)||1,ux=(bx-ax)/L,uy=(by-ay)/L;
+    ax-=ux*r;ay-=uy*r;bx+=ux*r;by+=uy*r;const steps=Math.ceil((L+2*r)*2);
+    for(let s=0;s<=steps;s++){const cx=ax+(bx-ax)*s/steps,cy=ay+(by-ay)*s/steps;
+      for(let y=Math.max(0,Math.floor(cy-r-1));y<=Math.min(H-1,Math.ceil(cy+r+1));y++)for(let x=Math.max(0,Math.floor(cx-r-1));x<=Math.min(W-1,Math.ceil(cx+r+1));x++){
+        const v=Math.min(1,Math.max(0,r-Math.hypot(x-cx,y-cy)+.5)),i=y*W+x;if(v>mf[i])mf[i]=v;}}}
+  return best.size;
 }
 
 /* ---------------- Viewer ---------------- */
@@ -546,14 +597,21 @@ function show(res,sc){
   $('#discHole').setAttribute('r',holeD()/2);
   const Ro=res.Rout,Rb=res.Rbase,m=Ro+4;
   $('#disc').setAttribute('viewBox',`${-m} ${-m} ${2*m} ${2*m}`);
-  const y0=-Ro-3,y1=-Rb+Math.max(8,(Ro-Rb)*.42),h=y1-y0,w=h*1.75;
-  $('#wall').setAttribute('viewBox',`${-w/2} ${y0} ${w} ${h}`);
-  const win=$('#discWin');win.setAttribute('x',-w/2);win.setAttribute('y',y0);win.setAttribute('width',w);win.setAttribute('height',h);
+  const win=$('#discWin');
+  if(state.wallMode==='ganz'){const g=Ro*1.25;$('#wall').setAttribute('viewBox',`${-g*1.25} ${-g} ${2.5*g} ${2*g}`);win.setAttribute('width',0);$('#wallHint').textContent='↻ ziehen zum Drehen';}
+  else{const y0=-Ro-3,y1=-Rb+Math.max(8,(Ro-Rb)*.42),h=y1-y0,w=h*1.75;
+    $('#wall').setAttribute('viewBox',`${-w/2} ${y0} ${w} ${h}`);
+    win.setAttribute('x',-w/2);win.setAttribute('y',y0);win.setAttribute('width',w);win.setAttribute('height',h);$('#wallHint').textContent='⟷ wischen zum Drehen';}
   const t=Math.max(1.2,Rb*.05);$('#discMark').setAttribute('d',`M0 ${-Rb+2}l${t} ${t*1.8}h${-2*t}z`);
-  $('#facts').innerHTML=`<b>Ø ${(2*Ro).toFixed(0)} mm</b> gesamt · Grundscheibe Ø ${(2*Rb).toFixed(0)} mm · Figuren bis ${(Ro-Rb).toFixed(0)} mm hoch`;
-  $('#warn').innerHTML=res.nIsl?`<div class="warn">⚠ ${res.nIsl} ${res.nIsl>1?'lose Teile':'loses Teil'} (rot) würde${res.nIsl>1?'n':''} herausfallen – ${res.nIsl>1?'sie werden':'es wird'} nicht exportiert.</div>`:`<div class="okmsg">✓ Alles hängt zusammen, lasertauglich.</div>`;
+  $('#facts').innerHTML=state.tab==='mathe'?`<b>Ø ${(2*Ro).toFixed(0)} mm</b> gesamt · Muster-Ø ${(2*Rb).toFixed(0)} mm`:`<b>Ø ${(2*Ro).toFixed(0)} mm</b> gesamt · Grundscheibe Ø ${(2*Rb).toFixed(0)} mm · Figuren bis ${(Ro-Rb).toFixed(0)} mm hoch`;
+  const n=res.nIsl,tt=n>1?`${n} lose Teile`:'1 loses Teil';
+  $('#warn').innerHTML=!n?`<div class="okmsg">✓ Alles hängt zusammen, lasertauglich.</div>`
+    :res.mode==='drop'?`<div class="okmsg">✓ ${tt} entfernt – das SVG enthält nur die zusammenhängende Scheibe.</div><div class="exp" style="margin-top:4px"><button class="btn sm" data-isl="bridge">Doch anbinden</button><button class="btn sm" data-isl="show">Rückgängig</button></div>`
+    :res.mode==='bridge'?`<div class="okmsg">✓ ${tt} mit 1,6-mm-Stegen angebunden.</div><div class="exp" style="margin-top:4px"><button class="btn sm" data-isl="drop">Lieber entfernen</button><button class="btn sm" data-isl="show">Rückgängig</button></div>`
+    :`<div class="warn">⚠ ${tt} (rot) ${n>1?'würden':'würde'} beim Lasern herausfallen.</div><div class="exp" style="margin-top:4px"><button class="btn sm" data-isl="drop">Rote Teile entfernen</button><button class="btn sm" data-isl="bridge">Mit Stegen anbinden</button></div>`;
   setRot(rot);
 }
+$('#warn').addEventListener('click',e=>{const b=e.target.closest('[data-isl]');if(!b)return;state.islands=b.dataset.isl;refresh();});
 function setRot(r){rot=r;const tr=`rotate(${r})`;$('#wallRot').setAttribute('transform',tr);$('#discRot').setAttribute('transform',tr);caption();}
 function topAngle(){return mod(-rot,360);}
 function angDist(a,b){const d=mod(a-b,360);return Math.min(d,360-d);}
@@ -561,6 +619,7 @@ function caption(){
   const t=topAngle();$('#angleLbl').textContent=`oben: ${Math.round(t)}°`;
   const el=$('#caption');
   if(!cur){el.innerHTML='<span class="muted">Noch keine Scheibe – lade ein Bild oder füge Figuren hinzu.</span>';return;}
+  if(!scenes.length&&state.capNote){el.innerHTML=state.capNote;return;}
   if(!scenes.length){el.innerHTML='<span class="muted">Wische über die Wand oder drehe die Scheibe. Der helle Bereich auf der Scheibe ist das, was an der Wand erscheint.</span>';return;}
   let bi=0;scenes.forEach((s,i)=>{if(angDist(s.a,t)<angDist(scenes[bi].a,t))bi=i;});
   const s=scenes[bi];el.innerHTML=`<span class="num">Szene ${bi+1}/${scenes.length}</span><b>${s.t}</b><div>${s.x}</div>`;
@@ -586,9 +645,9 @@ $('#play').onclick=()=>{if(playing){stopPlay();return;}playing=true;$('#play').c
 (function(){let drag=null;
   const wall=$('#wall'),disc=$('#disc');
   const ang=(e,el)=>{const r=el.getBoundingClientRect();return Math.atan2(e.clientY-(r.top+r.height/2),e.clientX-(r.left+r.width/2))*180/Math.PI;};
-  wall.addEventListener('pointerdown',e=>{if(!cur)return;stopPlay();cancelAnimationFrame(anim);const vb=wall.viewBox.baseVal;drag={el:wall,x0:e.clientX,r0:rot,mm:vb.width/wall.getBoundingClientRect().width};wall.setPointerCapture(e.pointerId);});
+  wall.addEventListener('pointerdown',e=>{if(!cur)return;stopPlay();cancelAnimationFrame(anim);if(state.wallMode==='ganz'){drag={el:disc,a0:ang(e,wall),r0:rot,ref:wall};wall.setPointerCapture(e.pointerId);return;}const vb=wall.viewBox.baseVal;drag={el:wall,x0:e.clientX,r0:rot,mm:vb.width/wall.getBoundingClientRect().width};wall.setPointerCapture(e.pointerId);});
   disc.addEventListener('pointerdown',e=>{if(!cur)return;stopPlay();cancelAnimationFrame(anim);drag={el:disc,a0:ang(e,disc),r0:rot};disc.setPointerCapture(e.pointerId);});
-  const move=e=>{if(!drag)return;if(drag.el===wall){const dx=(e.clientX-drag.x0)*drag.mm;setRot(drag.r0+dx/(cur.Rbase+6)*180/Math.PI);}else{let d=ang(e,disc)-drag.a0;setRot(drag.r0+d);}};
+  const move=e=>{if(!drag)return;if(drag.el===wall){const dx=(e.clientX-drag.x0)*drag.mm;setRot(drag.r0+dx/(cur.Rbase+6)*180/Math.PI);}else{let d=ang(e,drag.ref||disc)-drag.a0;setRot(drag.r0+d);}};
   const up=()=>{drag=null;};
   for(const el of [wall,disc]){el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);}
 })();
@@ -610,14 +669,17 @@ $('#optD').addEventListener('input',()=>schedule());
 $('#optHole').addEventListener('input',()=>{$('#discHole').setAttribute('r',holeD()/2);});
 
 /* ---------------- Tabs & Modi ---------------- */
-const state={tab:'geschichten'};
+const state={tab:'geschichten',wallMode:'rand',islands:'show',capNote:''};
+function setWallMode(m){state.wallMode=m;$$('[data-wm]').forEach(b=>b.classList.toggle('on',b.dataset.wm===m));if(cur)show(cur,scenes);}
+$$('[data-wm]').forEach(b=>b.onclick=()=>setWallMode(b.dataset.wm));
 let timer=null;
 function schedule(ms=140){clearTimeout(timer);timer=setTimeout(refresh,ms);}
 function refresh(){
-  const t=state.tab;
-  if(t==='geschichten'){show(build(renderScene(STORY),{D:targetD()}),STORY.scenes);}
-  else if(t==='baukasten'){show(bk.items.length?build(renderScene(bk),{D:targetD()}):build(renderScene({R:bk.R,items:[]}),{D:targetD()}),bk.scenes||[]);}
+  const t=state.tab,o={D:targetD(),islands:state.islands};state.capNote='';
+  if(t==='geschichten'){show(build(renderScene(STORY),o),STORY.scenes);}
+  else if(t==='baukasten'){show(build(renderScene(bk.items.length?bk:{R:bk.R,items:[]}),o),bk.scenes||[]);}
   else if(t==='ki'){show(ki.src?buildKi():null,[]);}
+  else if(t==='mathe'){const g=GEN[math.gen];state.capNote=`<b>${g.label}</b><div class="small">${g.desc}</div>`;show(build(renderMath(math.gen,math.P[math.gen]),o),[]);}
 }
 function setTab(t){
   if(!document.querySelector(`[data-panel="${t}"]`))t='geschichten';
@@ -626,6 +688,7 @@ function setTab(t){
   $('#grid').classList.toggle('noview',t==='prompts'||t==='tipps');
   $('#svgOut').hidden=true;status('');
   if(location.hash.slice(1)!==t)history.replaceState(null,'','#'+t);
+  state.islands='show';setWallMode(t==='mathe'?'ganz':'rand');
   stopPlay();refresh();
 }
 $$('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
@@ -662,9 +725,9 @@ function buildKi(){
   for(let y=0;y<ki.H;y++)for(let x=0;x<ki.W;x++){const v=ki.gray[y*ki.W+x];f[(y+P)*W+x+P]=inv?1-v:v;}
   f=boxBlur(f,W,H,+$('#kiBlur').value);
   for(let x=0;x<W;x++){f[x]=0;f[(H-1)*W+x]=0;}for(let y=0;y<H;y++){f[y*W]=0;f[y*W+W-1]=0;}
-  return build({field:f,W,H,T:+$('#kiT').value},{D:targetD(),circle:$('#kiCircle').checked,fillHoles:$('#kiHoles').checked});
+  return build({field:f,W,H,T:+$('#kiT').value},{D:targetD(),islands:state.islands,circle:$('#kiCircle').checked,fillHoles:$('#kiHoles').checked});
 }
-function kiSet(img,url){const r=grayFrom(img,1100);Object.assign(ki,{src:true,gray:r.g,W:r.w,H:r.h});const th=$('#kiThumb');th.src=url;th.style.display='block';schedule(10);}
+function kiSet(img,url){state.islands='show';const r=grayFrom(img,1100);Object.assign(ki,{src:true,gray:r.g,W:r.w,H:r.h});const th=$('#kiThumb');th.src=url;th.style.display='block';schedule(10);}
 $('#kiFile').onchange=e=>{const f=e.target.files[0];if(f)loadImageFile(f,kiSet);};
 ['#kiT','#kiBlur'].forEach(s=>$(s).addEventListener('input',e=>{e.target.nextElementSibling.textContent=(+e.target.value).toFixed(s==='#kiT'?2:0);schedule(160);}));
 ['#kiCircle','#kiHoles','#kiInv'].forEach(s=>$(s).addEventListener('change',()=>schedule(10)));
@@ -805,6 +868,13 @@ const PROMPTS=[
 5. the mouse holding up an apple under an apple tree, the crocodile with the apple in its mouth
 6. the mouse riding on the smiling crocodile's back across the waves
 Chunky simple picture-book shapes for a 3-year-old, side view, small round white eye holes, no thin lines, no gray, no shading, no text, no frames around the scenes.`},
+ {h:'— Filigran für Erwachsene (dünner Karton) —',tags:['Stil-Baustein'],p:`Intricate German Scherenschnitt paper-cut style for laser cutting thin card: elegant, detailed and lace-like, with many small negative-space windows, delicate leaves, feathers and ornaments. Still cuttable: no line thinner than about 0.6 mm at 200 mm width, and every element is interconnected into one single piece (branches, vines and ornaments link everything, nothing floats). Solid pure black on pure white, no gray, no gradients, no text.`},
+ {h:'G · Szenen-Raster „Japanische Holzschnitt-Reise“',tags:['für ②','filigran'],p:`A 3x2 grid of six separate scenes on pure white with wide white gaps, each scene standing on its own thin black ground bar. Scenes in reading order: 1. a great curling ocean wave with claw-like foam and a tiny boat, 2. two cranes taking off from a gnarled pine branch, 3. a pagoda framed by cherry blossom branches, 4. a fisherman on a small boat under a crescent moon caught in reeds, 5. Mount Fuji with layered cloud bands and flying geese linked by their wingtips, 6. koi fish among lotus leaves and stems. Intricate German Scherenschnitt paper-cut style: lace-like detail, many small windows, every element interconnected into one piece per scene, nothing floating, no line thinner than 0.6 mm at final size, solid pure black on pure white, no gray, no text.`},
+ {h:'H · Szenen-Raster „Jugendstil-Garten“',tags:['für ②','filigran'],p:`A 3x2 grid of six separate Art Nouveau scenes on pure white with wide white gaps, each on its own thin black ground bar: 1. tall lilies with curling whiplash stems, 2. a peacock with its fan tail spread into ornamental eyes, 3. a wrought-iron garden gate overgrown with roses, 4. dragonflies resting on irises, 5. a fountain with water arcs and a heron, 6. a woman with flowing hair reading under a willow, seen from the side. Delicate paper-cut lace, curving vines connect every element, nothing floating, no line thinner than 0.6 mm at final size, pure black on pure white, no gray, no text.`},
+ {h:'I · Szenen-Raster „Nordischer Winterwald“',tags:['für ②','filigran'],p:`A 3x2 grid of six separate scenes on pure white with wide white gaps, each on its own thin black ground bar: 1. a stag with large antlers between birch trees, 2. a fox curled in the snow under fern-like frost branches, 3. an owl on a broken spruce, 4. a log cabin with a smoking chimney and a sled, 5. a frozen lake with a skater and reeds, 6. northern lights drawn as ribbon-like lace bands connected to the tree tops. Intricate Scherenschnitt paper-cut, every element interconnected, nothing floating, no line thinner than 0.6 mm at final size, pure black on pure white, no gray, no text.`},
+ {h:'J · Szenen-Raster „Altstadt bei Nacht“',tags:['für ②','filigran'],p:`A 3x2 grid of six separate scenes on pure white with wide white gaps, each on its own thin black ground bar: 1. crooked half-timbered houses with lit windows, 2. a cat walking on a rooftop past chimneys and an antenna, 3. a bell tower with a clock and pigeons sitting on its ledges, 4. a canal with an arched bridge and a gondola, 5. a market square with string lights and a carousel, 6. a tethered hot-air balloon above the roofs held by ropes. Fine architectural paper-cut lace, windows as small cut-outs, everything connected, no line thinner than 0.6 mm at final size, pure black on pure white, no gray, no text.`},
+ {h:'K · Szenen-Raster „Tiefsee“',tags:['für ②','filigran'],p:`A 3x2 grid of six separate underwater scenes on pure white with wide white gaps, each on its own thin black seabed bar: 1. a kelp forest with swaying fronds, 2. jellyfish whose long tentacles reach down and connect to coral, 3. an octopus curling its arms around an anchor, 4. a sunken sailing ship overgrown with sea fans, 5. seahorses holding on to seagrass, 6. a diver among bubbles that are linked like a chain to the seabed. Intricate lace-like paper-cut with many small windows, everything interconnected, no line thinner than 0.6 mm at final size, pure black on pure white, no gray, no text.`},
+ {h:'L · Ganze Scheibe „Zauberwald-Mandala“',tags:['für ②','filigran'],p:`Laser-cut stencil, flat top-down view, pure white background. A solid black disc filling about 55% of the image whose inner area is cut as an intricate mandala of leaves, ferns and moon phases. Around the outer rim, delicate silhouettes stand on the edge and point outward like on a tiny planet: a forest of slender trees whose branches weave into one continuous lace band, deer, a fox, an owl, mushrooms and a winding path. Intricate German Scherenschnitt style, everything interconnected into one piece, nothing floating, no line thinner than 0.6 mm at 200 mm diameter, pure black on pure white, no gray, no text. Square image.`},
  {h:'D · Einzelfigur (Vorlage für den Baukasten)',tags:['für ③','am zuverlässigsten'],p:`Single solid black silhouette of [FIGUR], side view, standing on a flat horizontal ground line, centered on a pure white background. Chunky simple shapes for a laser-cut shadow puppet for a toddler, one small round eye left white as a hole, no thin lines thinner than the eye, no gray, no shading, no text, no cast shadow, nothing floating.`},
  {h:'Ideen für [FIGUR] – passend zur Mausgeschichte',tags:['für ③'],p:`a little mouse waving with one hand
 a little mouse sleeping in a tiny bed
@@ -823,6 +893,91 @@ $('#promptList').innerHTML=PROMPTS.map((q,i)=>`<div class="ph"><h3>${q.h}</h3><b
 $('#promptList').addEventListener('click',async e=>{const b=e.target.closest('[data-copy]');if(!b)return;const t=PROMPTS[+b.dataset.copy].p;
   try{await navigator.clipboard.writeText(t);b.textContent='Kopiert ✓';}catch(err){const r=document.createRange();r.selectNodeContents(b.parentElement.nextElementSibling.nextElementSibling);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Markiert';}
   setTimeout(()=>b.textContent='Kopieren',1600);});
+
+/* ---------------- ④ Mathe-Kreise ---------------- */
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+function rng(seed){let a=seed>>>0||1;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const GA=Math.PI*(3-Math.sqrt(5));
+const COMMON=[
+  {k:'web',l:'Stegbreite',min:.5,max:2.5,step:.05,v:.9,u:' mm'},
+  {k:'ring',l:'Randbreite',min:2,max:10,step:.5,v:4,u:' mm'},
+  {k:'rimN',l:'Randwellen',min:0,max:72,step:1,v:0},
+  {k:'rimA',l:'Wellentiefe',min:0,max:5,step:.1,v:1.5,u:' mm'},
+  {k:'spokes',l:'Speichen',min:0,max:12,step:1,v:0}];
+const GEN={
+  spiro:{label:'Spirograph',desc:'Hypotrochoiden: Ein Zahnrad rollt in einem größeren ab, ein Stift zeichnet mit. Mehrere versetzte Lagen verweben sich zu Spitze.',
+    params:[{k:'a',l:'Außenrad',min:40,max:160,step:1,v:105},{k:'b',l:'Innenrad',min:5,max:90,step:1,v:40},{k:'d',l:'Stiftabstand',min:.3,max:1.8,step:.01,v:1.15},{k:'layers',l:'Lagen',min:1,max:4,step:1,v:2}],
+    draw(F,P,G){const a=P.a,b=Math.min(P.b,a-2),g=gcd(a,b),T=2*Math.PI*b/g,n=Math.min(80000,Math.ceil(T/.004));
+      for(let j=0;j<P.layers;j++){const d=b*P.d*(1-.2*j),s=(G.rin+P.web*.3)/((a-b)+d),ro=j*Math.PI*g/a,c=Math.cos(ro),si=Math.sin(ro),pts=[];
+        for(let i=0;i<=n;i++){const t=i/n*T,x=((a-b)*Math.cos(t)+d*Math.cos((a-b)/b*t))*s,y=((a-b)*Math.sin(t)-d*Math.sin((a-b)/b*t))*s;pts.push([x*c-y*si,x*si+y*c]);}
+        F.l(pts,P.web);}
+      const dmin=b*P.d*(1-.2*(P.layers-1)),rmin=Math.abs((a-b)-dmin)*(G.rin+P.web*.3)/((a-b)+dmin);
+      if(rmin>G.hub-P.web){const ctx=F.ctx;ctx.lineWidth=P.web*1.4;ctx.beginPath();ctx.arc(0,0,rmin,0,2*Math.PI);ctx.stroke();
+        if(!P.spokes)for(let i=0;i<4;i++){const t=i*Math.PI/2+Math.PI/4;F.l([[0,0],[(rmin+.3)*Math.cos(t),(rmin+.3)*Math.sin(t)]],P.web*1.4);}}}},
+  maurer:{label:'Maurer-Rose',desc:'Punkte auf der Rosenkurve r = sin(nθ), immer um d Grad weiter verbunden. Kleine Änderungen an d ergeben völlig neue Sterne.',
+    params:[{k:'n',l:'Blätter n',min:2,max:12,step:1,v:6},{k:'d',l:'Winkel d',min:1,max:179,step:1,v:71},{k:'rose',l:'Rosenlinie',min:0,max:1,step:1,v:1}],
+    draw(F,P,G){const D=Math.PI/180,pts=[];for(let k=0;k<=360;k++){const t=k*P.d*D,r=G.rin*Math.sin(P.n*t);pts.push([r*Math.cos(t),r*Math.sin(t)]);}F.l(pts,P.web);
+      if(P.rose){const q=[];for(let k=0;k<=3600;k++){const t=k/10*D,r=G.rin*Math.sin(P.n*t);q.push([r*Math.cos(t),r*Math.sin(t)]);}F.l(q,P.web*1.5);}}},
+  voronoi:{label:'Zellen (Voronoi)',desc:'Organische Zellen wie Libellenflügel oder Seifenschaum. Die Saatpunkte sitzen auf einer Sonnenblumen-Spirale und werden zufällig verschoben.',
+    params:[{k:'N',l:'Zellen',min:30,max:500,step:1,v:170},{k:'grad',l:'Verlauf',min:-.8,max:.8,step:.05,v:.3},{k:'jit',l:'Unordnung',min:0,max:1,step:.05,v:.3},{k:'seed',l:'Seed',min:1,max:999,step:1,v:7}],
+    pixel(img,W,P,G){const rnd=rng(P.seed),S=[],c=W/2,span=G.rin-G.hub;
+      for(let i=0;i<P.N;i++){const u=(i+.5)/P.N;let r=G.hub+span*Math.pow(u,.5*(1+P.grad)),t=i*GA+(rnd()-.5)*P.jit*1.2;r+=(rnd()-.5)*P.jit*span/Math.sqrt(P.N)*.6;S.push([c+r*Math.cos(t)*PX,c+r*Math.sin(t)*PX]);}
+      const cs=Math.max(8,2*G.rin*PX/Math.sqrt(P.N)),gw=Math.ceil(W/cs),B=Array.from({length:gw*gw},()=>[]);
+      for(const p of S){const bx=Math.min(gw-1,Math.max(0,Math.floor(p[0]/cs))),by=Math.min(gw-1,Math.max(0,Math.floor(p[1]/cs)));B[by*gw+bx].push(p);}
+      const w=P.web*PX,R2=(G.rin*PX+2)**2,d=img.data;
+      for(let y=0;y<W;y++)for(let x=0;x<W;x++){if((x-c)**2+(y-c)**2>R2)continue;const bx=Math.floor(x/cs),by=Math.floor(y/cs);let d1=1e18,d2=1e18;
+        for(let ring=0;ring<gw;ring++){for(let yy=by-ring;yy<=by+ring;yy++)for(let xx=bx-ring;xx<=bx+ring;xx++){if(Math.max(Math.abs(xx-bx),Math.abs(yy-by))!==ring||xx<0||yy<0||xx>=gw||yy>=gw)continue;
+            for(const p of B[yy*gw+xx]){const q=(p[0]-x)**2+(p[1]-y)**2;if(q<d1){d2=d1;d1=q;}else if(q<d2)d2=q;}}
+          if(d2<1e17&&Math.sqrt(d2)<ring*cs)break;}
+        const v=Math.min(1,Math.max(0,(w-(Math.sqrt(d2)-Math.sqrt(d1)))*.5+.5));if(v>0)d[(y*W+x)*4+3]=Math.round(v*255);}}},
+  phyllo:{label:'Sonnenblume',desc:'Phyllotaxis: Jedes Loch sitzt 137,5° (goldener Winkel) weiter. So ordnen Sonnenblumen ihre Kerne – mit dichtem Zentrum und weiten Spiralen.',
+    params:[{k:'N',l:'Löcher',min:60,max:1400,step:1,v:520},{k:'size',l:'Lochgröße',min:.3,max:.95,step:.01,v:.85},{k:'p',l:'Verdichtung',min:.3,max:.9,step:.01,v:.62},{k:'shape',l:'Form (Kreis/Tropfen/Raute)',min:0,max:2,step:1,v:1}],
+    draw(F,P,G){F.c(0,0,G.rin+.2);const lo=G.hub+P.web+.6,span=G.rin-P.web-.6-lo;
+      F.hole(()=>{for(let i=1;i<=P.N;i++){const u=i/P.N,r=lo+span*Math.pow(u,P.p),dr=span*P.p*Math.pow(u,P.p-1)/P.N,s=Math.sqrt(2*Math.PI*r*dr);
+        let h=Math.max(0,(.92*s-P.web)/2*P.size);h=Math.min(h,G.rin-P.web-r,r-G.hub-P.web);if(h<.35)continue;const t=i*GA,c=Math.cos(t),sn=Math.sin(t),x=r*c,y=r*sn;
+        if(P.shape===0)F.c(x,y,h);
+        else if(P.shape===1){const hc=h*.78;F.c(x-c*h*.2,y-sn*h*.2,hc);F.p([[x-c*h*.2-sn*hc,y-sn*h*.2+c*hc],[x+c*h*1.05,y+sn*h*1.05],[x-c*h*.2+sn*hc,y-sn*h*.2-c*hc]]);}
+        else F.p([[x+c*h*1.2,y+sn*h*1.2],[x-sn*h*.75,y+c*h*.75],[x-c*h*1.2,y-sn*h*1.2],[x+sn*h*.75,y-c*h*.75]]);}});}},
+  guilloche:{label:'Guilloche',desc:'Phasenversetzte, modulierte Sinuswellen auf Kreisbahnen, wie auf Banknoten und Uhrenzifferblättern. Wo sich die Linien kreuzen, entsteht Spitze.',
+    params:[{k:'bands',l:'Bänder',min:1,max:4,step:1,v:3},{k:'k',l:'Wellen',min:4,max:60,step:1,v:22},{k:'m',l:'Linien je Band',min:2,max:9,step:1,v:4},{k:'mod',l:'Modulation',min:0,max:1,step:.05,v:.35},{k:'k2',l:'Mod.-Frequenz',min:1,max:12,step:1,v:4}],
+    draw(F,P,G){const lo0=G.hub+.5,span=(G.rin-lo0)/P.bands,ctx=F.ctx;
+      for(let b=0;b<P.bands;b++){const lo=lo0+b*span,mid=lo+span/2,A=span/2+P.web*.25,kb=P.k+b*Math.round(P.k/3);
+        if(b>0){ctx.lineWidth=P.web*1.3;ctx.beginPath();ctx.arc(0,0,lo,0,2*Math.PI);ctx.stroke();}
+        const n=Math.max(1200,kb*90);
+        for(let j=0;j<P.m;j++){const pts=[];for(let i=0;i<=n;i++){const t=i/n*2*Math.PI,r=mid+A*Math.sin(kb*t+2*Math.PI*j/P.m)*(1-P.mod+P.mod*Math.cos(P.k2*t));pts.push([r*Math.cos(t),r*Math.sin(t)]);}F.l(pts,P.web);}}}},
+};
+const math={gen:'spiro',P:{}};
+const defaults=g=>Object.fromEntries([...GEN[g].params,...COMMON].map(p=>[p.k,p.v]));
+for(const g in GEN)math.P[g]=defaults(g);
+math.P.phyllo.spokes=0;math.P.voronoi.rimN=36;math.P.voronoi.rimA=1.2;math.P.guilloche.rimN=44;math.P.guilloche.rimA=1;math.P.maurer.spokes=0;
+function renderMath(id,P){
+  const Rr=95,E=Rr+P.rimA+6,W=Math.ceil(2*E*PX),gen=GEN[id];
+  const cv=document.createElement('canvas');cv.width=cv.height=W;const ctx=cv.getContext('2d',{willReadFrequently:true});
+  const G={R:Rr,rin:Rr-P.ring,hub:Math.max(8,holeD()/2+4)};
+  if(gen.pixel){const img=ctx.createImageData(W,W);gen.pixel(img,W,P,G);ctx.putImageData(img,0,0);}
+  ctx.setTransform(PX,0,0,PX,W/2,W/2);ctx.fillStyle=ctx.strokeStyle='#000';
+  const F=makeF(ctx);
+  if(gen.draw)gen.draw(F,P,G);
+  const ring=new Path2D();const M=720;for(let i=0;i<=M;i++){const t=i/M*2*Math.PI,r=Rr+(P.rimN?P.rimA*Math.cos(P.rimN*t):0);i?ring.lineTo(r*Math.sin(t),-r*Math.cos(t)):ring.moveTo(r*Math.sin(t),-r*Math.cos(t));}
+  ring.closePath();ring.arc(0,0,G.rin,0,2*Math.PI,true);ctx.fill(ring,'evenodd');
+  F.c(0,0,G.hub);
+  for(let i=0;i<P.spokes;i++){const t=i/P.spokes*2*Math.PI;F.l([[G.hub*Math.cos(t)*.5,G.hub*Math.sin(t)*.5],[(G.rin+.5)*Math.cos(t),(G.rin+.5)*Math.sin(t)]],P.web*1.4);}
+  const data=ctx.getImageData(0,0,W,W).data,f=new Float32Array(W*W);for(let i=0;i<f.length;i++)f[i]=data[i*4+3]/255;
+  return {field:f,W,H:W,center:[W/2-.5,W/2-.5],baseRpx:G.rin*PX,pxmm:PX};
+}
+function mathUI(){
+  $('#genChips').innerHTML=Object.entries(GEN).map(([k,g])=>`<button data-gen="${k}" class="${k===math.gen?'on':''}">${g.label}</button>`).join('');
+  const g=GEN[math.gen],P=math.P[math.gen];$('#genDesc').textContent=g.desc;
+  const row=p=>`<label class="sl">${p.l}<input type="range" min="${p.min}" max="${p.max}" step="${p.step}" value="${P[p.k]}" data-p="${p.k}"><output>${fmt(p,P[p.k])}</output></label>`;
+  $('#genParams').innerHTML=g.params.map(row).join('')+'<h3 style="font-size:14px;margin:10px 0 2px">Rahmen &amp; Stege</h3>'+COMMON.map(row).join('');
+}
+const fmt=(p,v)=>(p.step<1?(+v).toFixed(p.step<.1?2:1):v)+(p.u||'');
+$('#genChips').addEventListener('click',e=>{const b=e.target.closest('[data-gen]');if(!b)return;math.gen=b.dataset.gen;mathUI();state.islands='show';schedule(10);});
+$('#genParams').addEventListener('input',e=>{const k=e.target.dataset.p;if(!k)return;const p=[...GEN[math.gen].params,...COMMON].find(q=>q.k===k);math.P[math.gen][k]=+e.target.value;e.target.nextElementSibling.textContent=fmt(p,+e.target.value);schedule(220);});
+$('#genRand').onclick=()=>{const P=math.P[math.gen];for(const p of GEN[math.gen].params){const n=Math.round((p.min+Math.random()*(p.max-p.min))/p.step)*p.step;P[p.k]=+n.toFixed(4);}
+  P.rimN=Math.random()<.5?0:Math.round(12+Math.random()*48);P.spokes=Math.random()<.6?0:Math.round(3+Math.random()*7);mathUI();state.islands='show';schedule(10);};
+$('#genReset').onclick=()=>{math.P[math.gen]=defaults(math.gen);mathUI();schedule(10);};
+mathUI();
 
 /* ---------------- Start ---------------- */
 setTab(location.hash.slice(1)||'geschichten');
