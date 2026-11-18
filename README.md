@@ -13,7 +13,7 @@ Eine runde Scheibe mit Silhouetten am Rand, ein Bleistift als Achse, eine Tasche
 - **② Szenen-Bild → Rad** – ein KI-Bild mit 4–8 einzelnen Szenen: Die Szenen werden automatisch erkannt, ausgeschnitten, in Lesereihenfolge sortiert und entlang des Kreisbogens gebogen.
 - **③ Baukasten** – Figuren aus der Bibliothek oder eigene KI-Figuren frei auf dem Rand platzieren.
 - **④ Mathe-Kreise** – fünf generative Spitzen-Muster (Spirograph, Maurer-Rose, Voronoi-Zellen, Sonnenblume/Phyllotaxis, Guilloche) mit Reglern und Zufallsknopf. Gedacht für die Lampe mittig hinter der Scheibe, gut geeignet für dünnen Karton.
-- **⑤ Bildarchiv** – gemeinfreie Buchscans auf Wikimedia Commons (ohne Key) oder Flickr (eigener API-Key, nur PD/CC-Lizenzen, optional nur „Internet Archive Book Images“) durchsuchen, Figur per Lasso ausschneiden, als Silhouette vektorisieren und mit Quellenangabe in die Bibliothek übernehmen. Funktioniert nur auf GitHub Pages bzw. lokal, nicht im Claude-Vorschaufenster.
+- **⑤ Bildarchiv** – ein Wort eingeben (z. B. „Maus“): Die App sucht auf Wikimedia Commons parallel nach ~17 Varianten (DE/EN/FR × Silhouette, Scherenschnitt, Schattenriss, Papercut, Ombre chinoise …), bewertet jedes Vorschaubild nach Silhouetten-Eignung und sortiert danach. Figur per Lasso ausschneiden, vektorisieren und mit Quellenangabe in die Bibliothek übernehmen. Funktioniert auf GitHub Pages bzw. lokal, nicht im Claude-Vorschaufenster.
 - **Lose Teile** werden rot markiert und lassen sich per Knopf entfernen oder automatisch mit 1,6-mm-Stegen anbinden.
 - **Prompts** für Nano Banana & Co. (auch filigrane Scherenschnitt-Szenen für Erwachsene) sowie Bau- und Lichttipps.
 

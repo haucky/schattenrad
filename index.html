@@ -73,6 +73,7 @@ input[type=range]{width:100%;accent-color:var(--lamp)}
 .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:10px}
 .results button{padding:0;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:pointer;aspect-ratio:1;position:relative}
 .results img{width:100%;height:100%;object-fit:cover;display:block}
+.results b{position:absolute;right:3px;top:3px;background:#1b1829d0;color:#ffcf6e;font:600 10.5px system-ui;padding:1px 5px;border-radius:6px}
 .results span{position:absolute;left:0;right:0;bottom:0;background:#000a;color:#fff;font-size:10.5px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
 .txt{width:100%;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px system-ui}
 .edwrap{position:relative;background:#fff;border-radius:10px;overflow:hidden;margin-top:8px}
@@ -273,18 +274,12 @@ ul.tight li{margin:3px 0}
 <section data-panel="archiv" hidden>
   <div class="card">
     <h2>Bildarchiv: Figuren aus alten Büchern</h2>
-    <p class="muted small" style="margin:0 0 8px">Durchsuche gemeinfreie und frei lizenzierte Buchscans, schneide eine Figur aus und übernimm sie als Silhouette in die Bibliothek. Besonders gut eignen sich alte Scherenschnitte, weil sie schon Silhouetten sind.</p>
-    <div class="edrow" style="margin-top:0">
-      <span class="seg" id="srcSeg"><button data-src="commons" class="on">Wikimedia Commons</button><button data-src="flickr">Flickr</button></span>
-    </div>
-    <div id="flickrOpts" hidden>
-      <input class="txt" id="flickrKey" placeholder="Flickr API-Key (kostenlos unter flickr.com/services/apps/create)" autocomplete="off">
-      <label class="chk"><input type="checkbox" id="flickrIA" checked> Nur „Internet Archive Book Images“ (Millionen gemeinfreie Buchseiten)</label>
-      <p class="small muted" style="margin:0">Es werden nur Bilder ohne bekannte Rechte, Public Domain, CC0, CC BY und CC BY-SA gesucht. Ob Flickr das Auslesen der Bilder erlaubt, hängt vom Bild ab. Wenn nicht, hilft der Weg über „Eigenes Bild“.</p>
-    </div>
-    <form id="searchForm" class="addrow"><input class="txt" id="q" placeholder="z. B. Scherenschnitt, silhouette fox, Konewka" style="flex:1"><button class="btn pri">Suchen</button></form>
+    <p class="muted small" style="margin:0 0 8px">Gib einfach ein Wort ein, zum Beispiel „Maus“. Die App sucht auf Wikimedia Commons nach vielen Varianten (deutsch, englisch, französisch, jeweils mit Silhouette, Scherenschnitt, Schattenriss, Papercut …) und sortiert die Treffer nach Silhouetten-Eignung. Alles dort ist gemeinfrei oder frei lizenziert.</p>
+    <form id="searchForm" class="addrow"><input class="txt" id="q" placeholder="Was suchst du? z. B. Maus" style="flex:1"><button class="btn pri">Suchen</button></form>
     <div class="chips" id="qChips"></div>
     <div id="searchMsg" class="small muted"></div>
+    <label class="chk" id="silWrap" hidden><input type="checkbox" id="silOnly" checked> Nur silhouettenartige Bilder (kontrastreich, wenig Farbe)</label>
+    <details id="varWrap" hidden><summary class="small muted" style="cursor:pointer">Gesuchte Begriffe anzeigen / filtern</summary><div class="chips" id="varChips"></div></details>
     <div class="results" id="results"></div>
     <div class="exp"><button class="btn" id="more" hidden>Mehr laden</button><label class="btn" style="cursor:pointer">Eigenes Bild öffnen<input type="file" id="edFile" accept="image/*" hidden></label></div>
   </div>
@@ -1047,45 +1042,79 @@ $('#genReset').onclick=()=>{math.P[math.gen]=defaults(math.gen);mathUI();schedul
 mathUI();
 
 /* ---------------- ⑤ Bildarchiv ---------------- */
-const arc={src:'commons',q:'',next:null,page:1};
-const QCHIPS=['Scherenschnitt','Paul Konewka','Karl Fröhlich Scherenschnitt','Arthur Rackham silhouette','silhouette animals','Struwwelpeter','Internet Archive Book Images fox','Grandville animals'];
-$('#qChips').innerHTML=QCHIPS.map(q=>`<button data-q="${q}">${q}</button>`).join('');
-$('#qChips').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;$('#q').value=b.dataset.q;doSearch(true);});
-$$('#srcSeg button').forEach(b=>b.onclick=()=>{arc.src=b.dataset.src;$$('#srcSeg button').forEach(x=>x.classList.toggle('on',x===b));$('#flickrOpts').hidden=arc.src!=='flickr';$('#results').innerHTML='';$('#more').hidden=true;});
-try{$('#flickrKey').value=localStorage.getItem('schattenrad-flickr')||'';}catch(e){}
-$('#flickrKey').addEventListener('change',e=>{try{localStorage.setItem('schattenrad-flickr',e.target.value.trim());}catch(err){}});
-$('#searchForm').addEventListener('submit',e=>{e.preventDefault();doSearch(true);});
-$('#more').onclick=()=>doSearch(false);
-const stripHtml=h=>{const d=document.createElement('div');d.innerHTML=h||'';return d.textContent.trim();};
-const FL_LIC={1:'CC BY-NC-SA',2:'CC BY-NC',3:'CC BY-NC-ND',4:'CC BY',5:'CC BY-SA',7:'keine bekannten Rechte',9:'CC0',10:'Public Domain'};
-async function doSearch(fresh){
-  const q=$('#q').value.trim();if(!q)return;const msg=$('#searchMsg');
-  if(fresh){arc.q=q;arc.next=null;arc.page=1;$('#results').innerHTML='';}
-  msg.textContent='Suche …';
-  try{
-    let items=[];
-    if(arc.src==='commons'){
-      const off=arc.next||0;
-      const u=`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(arc.q+' filetype:bitmap')}&gsrnamespace=6&gsrlimit=30&gsroffset=${off}&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=300&iiextmetadatafilter=LicenseShortName|Artist`;
-      const j=await (await fetch(u)).json();
-      items=Object.values(j.query?.pages||{}).sort((a,b)=>a.index-b.index).filter(p=>p.imageinfo).map(p=>{const ii=p.imageinfo[0],m=ii.extmetadata||{};
-        return {thumb:ii.thumburl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),file:p.title,url:ii.descriptionurl,license:m.LicenseShortName?.value||'',author:stripHtml(m.Artist?.value)};});
-      arc.next=j.continue?.gsroffset??null;
-    }else{
-      const key=$('#flickrKey').value.trim();if(!key){msg.textContent='Bitte zuerst einen Flickr API-Key eintragen.';return;}
-      const ia=$('#flickrIA').checked?'&user_id=126377022%40N07':'';
-      const u=`https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${encodeURIComponent(key)}&text=${encodeURIComponent(arc.q)}&license=4,5,7,9,10${ia}&sort=relevance&content_types=0&extras=url_q,url_c,url_l,owner_name,license&per_page=30&page=${arc.page}&format=json&nojsoncallback=1`;
-      const j=await (await fetch(u)).json();if(j.stat!=='ok')throw new Error(j.message||'Flickr-Fehler');
-      items=j.photos.photo.filter(p=>p.url_q).map(p=>({thumb:p.url_q,big:p.url_l||p.url_c||p.url_q,title:p.title||'Flickr-Bild',url:`https://www.flickr.com/photos/${p.owner}/${p.id}`,license:FL_LIC[p.license]||'',author:p.ownername}));
-      arc.page++;arc.next=j.photos.page<j.photos.pages?arc.page:null;
-    }
-    const box=$('#results'),start=box.children.length;
-    box.insertAdjacentHTML('beforeend',items.map((it,i)=>`<button data-i="${start+i}" title="${esc(it.title)}"><img loading="lazy" src="${esc(it.thumb)}" alt="${esc(it.title)}"><span>${esc(it.license)}</span></button>`).join(''));
-    arc.items=(fresh?[]:arc.items||[]).concat(items);
-    msg.textContent=items.length?`${arc.items.length} Treffer – antippen zum Ausschneiden.`:'Keine Treffer. Versuch es mit einem anderen Begriff (auch englisch).';
-    $('#more').hidden=arc.next==null;
-  }catch(e){msg.innerHTML=`Die Suche hat nicht geklappt (${esc(e.message)}). Im Claude-Vorschaufenster blockiert der Browser externe Abfragen – auf GitHub Pages (<a href="https://haucky.github.io/schattenrad/#archiv">haucky.github.io/schattenrad</a>) funktioniert es. Alternativ: „Eigenes Bild öffnen“.`;}
+// Kleines Wörterbuch: deutsch | englisch | französisch | englischer Plural
+const DICT=`Maus|mouse|souris|mice;Krokodil|crocodile|crocodile|crocodiles;Alligator|alligator|alligator|alligators;Katze|cat|chat|cats;Hund|dog|chien|dogs;Fuchs|fox|renard|foxes;Hase|hare|lièvre|hares;Kaninchen|rabbit|lapin|rabbits;Igel|hedgehog|hérisson|hedgehogs;Bär|bear|ours|bears;Eule|owl|hibou|owls;Vogel|bird|oiseau|birds;Rabe|raven|corbeau|ravens;Elefant|elephant|éléphant|elephants;Giraffe|giraffe|girafe|giraffes;Löwe|lion|lion|lions;Tiger|tiger|tigre|tigers;Pferd|horse|cheval|horses;Esel|donkey|âne|donkeys;Kuh|cow|vache|cows;Schwein|pig|cochon|pigs;Schaf|sheep|mouton|sheep;Ziege|goat|chèvre|goats;Ente|duck|canard|ducks;Gans|goose|oie|geese;Huhn|chicken|poule|chickens;Hahn|rooster|coq|roosters;Frosch|frog|grenouille|frogs;Schnecke|snail|escargot|snails;Fisch|fish|poisson|fish;Wal|whale|baleine|whales;Krake|octopus|pieuvre|octopuses;Drache|dragon|dragon|dragons;Hexe|witch|sorcière|witches;Prinzessin|princess|princesse|princesses;Prinz|prince|prince|princes;König|king|roi|kings;Ritter|knight|chevalier|knights;Zwerg|dwarf|nain|dwarfs;Riese|giant|géant|giants;Fee|fairy|fée|fairies;Schloss|castle|château|castles;Burg|castle|château fort|castles;Baum|tree|arbre|trees;Tanne|fir tree|sapin|fir trees;Haus|house|maison|houses;Schiff|ship|navire|ships;Boot|boat|bateau|boats;Zug|train|train|trains;Kutsche|carriage|carrosse|carriages;Mond|moon|lune|moons;Stern|star|étoile|stars;Sonne|sun|soleil|suns;Blume|flower|fleur|flowers;Schmetterling|butterfly|papillon|butterflies;Biene|bee|abeille|bees;Spinne|spider|araignée|spiders;Eichhörnchen|squirrel|écureuil|squirrels;Reh|deer|chevreuil|deer;Hirsch|stag|cerf|stags;Wolf|wolf|loup|wolves;Affe|monkey|singe|monkeys;Kamel|camel|chameau|camels;Zebra|zebra|zèbre|zebras;Pinguin|penguin|manchot|penguins;Dinosaurier|dinosaur|dinosaure|dinosaurs;Kind|child|enfant|children;Mädchen|girl|fille|girls;Junge|boy|garçon|boys;Rotkäppchen|little red riding hood|petit chaperon rouge|little red riding hood;Storch|stork|cigogne|storks;Schwan|swan|cygne|swans;Katzen|cat|chat|cats;Mäuse|mouse|souris|mice`.split(';').map(r=>r.split('|'));
+function variants(input){
+  const q=input.trim(),lq=q.toLowerCase();
+  const row=DICT.find(r=>r.some(w=>w.toLowerCase()===lq));
+  const [de,en,fr,pl]=row||[q,q,null,null];
+  const V=[];const add=(t,lang)=>{if(t&&!V.some(v=>v.q.toLowerCase()===t.toLowerCase()))V.push({q:t,lang});};
+  for(const m of ['silhouette','papercut','paper cut silhouette','shadow puppet','black silhouette','silhouette clipart','silhouette icon','silhouette illustration'])add(`${en} ${m}`,'en');
+  if(pl&&pl!==en)add(`${pl} silhouette`,'en');
+  for(const m of ['Scherenschnitt','Silhouette','Schattenriss','Schattenbild'])add(`${de} ${m}`,'de');
+  if(fr)for(const m of ['silhouette','ombre chinoise','découpage'])add(`${fr} ${m}`,'fr');
+  add(`${en} woodcut`,'en');
+  return {V,known:!!row,de,en,fr};
 }
+const arc={items:[],sel:null};
+const QCHIPS=['Maus','Krokodil','Fuchs','Igel','Eule','Hase','Drache','Schloss','Baum','Schiff','Hexe','Storch'];
+$('#qChips').innerHTML=QCHIPS.map(q=>`<button data-q="${q}">${q}</button>`).join('');
+$('#qChips').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;$('#q').value=b.dataset.q;doSearch();});
+$('#searchForm').addEventListener('submit',e=>{e.preventDefault();doSearch();});
+$('#more').hidden=true;
+$('#silOnly').addEventListener('change',renderResults);
+$('#varChips').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;arc.sel=b.dataset.v==='*'?null:+b.dataset.v;renderResults();});
+const stripHtml=h=>{const d=document.createElement('div');d.innerHTML=h||'';return d.textContent.trim();};
+async function commons(q){
+  const u=`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=20&prop=imageinfo&iiprop=url|mime|extmetadata&iiurlwidth=300&iiextmetadatafilter=LicenseShortName|Artist`;
+  const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();
+  return Object.values(j.query?.pages||{}).sort((a,b)=>a.index-b.index).filter(p=>p.imageinfo&&/^image\//.test(p.imageinfo[0].mime)&&p.imageinfo[0].thumburl).map((p,rank)=>{const ii=p.imageinfo[0],m=ii.extmetadata||{};
+    return {thumb:ii.thumburl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),file:p.title,url:ii.descriptionurl,license:m.LicenseShortName?.value||'',author:stripHtml(m.Artist?.value),rank};});
+}
+async function doSearch(){
+  const q=$('#q').value.trim();if(!q)return;const msg=$('#searchMsg');
+  const {V,known,en,de}=variants(q);arc.V=V;arc.items=[];arc.sel=null;arc.sorted=false;$('#results').innerHTML='';$('#varChips').innerHTML='';$('#silWrap').hidden=true;$('#varWrap').hidden=true;
+  const map=new Map();let done=0,fails=0;
+  msg.textContent=`Suche nach ${V.length} Varianten …`;
+  const queue=V.map((v,i)=>[v,i]);
+  async function worker(){while(queue.length){const [v,i]=queue.shift();
+    try{const res=await commons(v.q);v.n=res.length;
+      for(const it of res){const o=map.get(it.file);if(o){o.hits.push(i);o.rank=Math.min(o.rank,it.rank);}else map.set(it.file,{...it,hits:[i],sil:undefined});}}
+    catch(e){fails++;v.n=0;}
+    done++;msg.textContent=`Suche nach ${V.length} Varianten … ${done}/${V.length} · ${map.size} Bilder`;}}
+  await Promise.all([worker(),worker(),worker(),worker()]);
+  if(fails===V.length){msg.innerHTML=`Die Suche hat nicht geklappt. Im Claude-Vorschaufenster blockiert der Browser externe Abfragen – auf GitHub Pages (<a href="https://haucky.github.io/schattenrad/#archiv">haucky.github.io/schattenrad</a>) funktioniert es. Alternativ: „Eigenes Bild öffnen“.`;return;}
+  arc.items=[...map.values()];
+  msg.innerHTML=`${arc.items.length} Bilder aus ${V.length} Suchen${known?` (${esc(de)} · ${esc(en)})`:''}. Bewerte Silhouetten-Eignung …`;
+  $('#varChips').innerHTML=`<button data-v="*" class="on">Alle</button>`+V.map((v,i)=>`<button data-v="${i}" title="${esc(v.q)}">${esc(v.q)} <span class="muted">${v.n||0}</span></button>`).join('');
+  $('#silWrap').hidden=false;$('#varWrap').hidden=false;renderResults();
+}
+function silScore(img){
+  const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,48,48);
+  try{x.drawImage(img,0,0,48,48);var d=x.getImageData(0,0,48,48).data;}catch(e){return null;}
+  let dark=0,mid=0,sat=0;const n=48*48;
+  for(let i=0;i<n;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2],l=(.299*r+.587*g+.114*b)/255;sat+=(Math.max(r,g,b)-Math.min(r,g,b))/255;if(l<.3)dark++;else if(l<=.75)mid++;}
+  dark/=n;mid/=n;sat/=n;const bal=dark<.03||dark>.92?.25:1;
+  return Math.max(0,Math.min(1,(1-mid*1.6)*bal*(1-Math.min(1,sat*2.5))));
+}
+function order(){const s=it=>(it.sil??.45)*3+Math.min(4,it.hits.length)*.35-it.rank*.02;return arc.items.slice().sort((a,b)=>s(b)-s(a));}
+function renderResults(){
+  $$('#varChips button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='*'&&arc.sel==null)||+b.dataset.v===arc.sel&&b.dataset.v!=='*'));
+  const only=$('#silOnly').checked;
+  const list=order().filter(it=>(arc.sel==null||it.hits.includes(arc.sel))&&(!only||it.sil==null||it.sil>=.45));
+  const box=$('#results');box.innerHTML=list.map(it=>{const i=arc.items.indexOf(it);
+    return `<button data-i="${i}" title="${esc(it.title)}"><img loading="lazy" crossorigin="anonymous" src="${esc(it.thumb)}" alt="${esc(it.title)}">${it.sil!=null?`<b>◼ ${Math.round(it.sil*100)}</b>`:''}<span>${esc(it.license)}</span></button>`;}).join('');
+  $$('#results img').forEach(img=>{const it=arc.items[+img.parentElement.dataset.i];
+    img.onload=()=>{if(it.sil!==undefined)return;it.sil=silScore(img);
+      if(arc.sorted){if(it.sil!=null)img.insertAdjacentHTML('afterend',`<b>◼ ${Math.round(it.sil*100)}</b>`);if($('#silOnly').checked&&it.sil!=null&&it.sil<.45)img.parentElement.hidden=true;scoredMsg();return;}
+      clearTimeout(arc.rt);arc.rt=setTimeout(()=>{arc.sorted=true;scoredMsg();renderResults();},900);};
+    img.onerror=()=>{if(img.crossOrigin){img.removeAttribute('crossorigin');it.sil=null;img.src=it.thumb+'#nocors';}};});
+  const hidden=arc.items.length-list.length;
+  if(!list.length&&arc.items.length)box.innerHTML='<p class="small muted">Nichts silhouettenartiges dabei – Haken oben entfernen, um alle zu sehen.</p>';
+  $('#searchMsg').dataset.hidden=hidden;
+}
+function scoredMsg(){const n=arc.items.filter(i=>i.sil!=null).length,good=arc.items.filter(i=>i.sil>=.45).length;
+  $('#searchMsg').textContent=`${arc.items.length} Bilder aus ${arc.V.length} Suchen · ${good} wirken silhouettenartig (${n} bewertet). Antippen zum Ausschneiden.`;}
 $('#results').addEventListener('click',async e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=arc.items[+b.dataset.i];$('#searchMsg').textContent='Lade Bild …';
   let big=it.big;
   if(!big&&it.file){try{const j=await (await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&titles=${encodeURIComponent(it.file)}&prop=imageinfo&iiprop=url&iiurlwidth=1400`)).json();const p=Object.values(j.query.pages)[0];big=p.imageinfo[0].thumburl||p.imageinfo[0].url;}catch(err){big=it.thumb;}}
