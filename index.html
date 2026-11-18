@@ -70,6 +70,21 @@ input[type=range]{width:100%;accent-color:var(--lamp)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{border:0;background:var(--panel2);color:var(--muted);padding:7px 10px;font:500 13px system-ui;cursor:pointer}
 .seg button.on{background:var(--lamp2);color:#2a1d08}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:10px}
+.results button{padding:0;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;cursor:pointer;aspect-ratio:1;position:relative}
+.results img{width:100%;height:100%;object-fit:cover;display:block}
+.results span{position:absolute;left:0;right:0;bottom:0;background:#000a;color:#fff;font-size:10.5px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.txt{width:100%;background:var(--night);color:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:14px system-ui}
+.edwrap{position:relative;background:#fff;border-radius:10px;overflow:hidden;margin-top:8px}
+#edCanvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.edrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.prevs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.prevs>div{background:#fff;border-radius:10px;aspect-ratio:1;display:grid;place-items:center;overflow:hidden}
+.prevs canvas,.prevs svg{max-width:92%;max-height:92%}
+.mylib{list-style:none;padding:0;margin:6px 0 0}
+.mylib li{display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.mylib img{width:34px;height:34px;object-fit:contain;background:#fff;border-radius:6px}
+.mylib .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:6px 0}
 .drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer}
 .drop:hover{border-color:var(--lamp);color:var(--paper)}
@@ -98,6 +113,7 @@ ul.tight li{margin:3px 0}
   <button data-tab="ki">② KI-Bild → SVG</button>
   <button data-tab="baukasten">③ Baukasten</button>
   <button data-tab="mathe">④ Mathe-Kreise</button>
+  <button data-tab="archiv">⑤ Bildarchiv</button>
   <button data-tab="prompts">Prompts</button>
   <button data-tab="tipps">Bauen &amp; Ideen</button>
 </nav>
@@ -224,6 +240,11 @@ ul.tight li{margin:3px 0}
     <h2>Eigene Figur (z. B. aus KI)</h2>
     <p class="muted small" style="margin:0 0 8px">Einzelne schwarze Silhouette auf Weiß, Seitenansicht, unten flach. Die Unterkante wird zum Boden. Passende Prompts findest du unter „Prompts“ → Einzelfiguren.</p>
     <label class="drop">Figur-Bild wählen<input type="file" id="bkFile" accept="image/*"></label>
+    <p class="small muted" style="margin:8px 0 0">Oder im Reiter ⑤ Bildarchiv eine Figur aus alten Buchillustrationen ausschneiden.</p>
+  </div>
+  <div class="card">
+    <h2>Meine Figuren</h2>
+    <ul class="mylib" id="myLib"></ul>
   </div>
 </section>
 
@@ -245,6 +266,48 @@ ul.tight li{margin:3px 0}
       <li>Muster mit Hunderten Löchern brauchen lange: im Laserprogramm „Innere zuerst“ und Pfadoptimierung einschalten.</li>
       <li>Je mehr Speichen und Ringe, desto stabiler. Bei Karton die Randbreite nicht unter 3 mm stellen.</li>
     </ul>
+  </div>
+</section>
+
+<!-- ⑤ Bildarchiv -->
+<section data-panel="archiv" hidden>
+  <div class="card">
+    <h2>Bildarchiv: Figuren aus alten Büchern</h2>
+    <p class="muted small" style="margin:0 0 8px">Durchsuche gemeinfreie und frei lizenzierte Buchscans, schneide eine Figur aus und übernimm sie als Silhouette in die Bibliothek. Besonders gut eignen sich alte Scherenschnitte, weil sie schon Silhouetten sind.</p>
+    <div class="edrow" style="margin-top:0">
+      <span class="seg" id="srcSeg"><button data-src="commons" class="on">Wikimedia Commons</button><button data-src="flickr">Flickr</button></span>
+    </div>
+    <div id="flickrOpts" hidden>
+      <input class="txt" id="flickrKey" placeholder="Flickr API-Key (kostenlos unter flickr.com/services/apps/create)" autocomplete="off">
+      <label class="chk"><input type="checkbox" id="flickrIA" checked> Nur „Internet Archive Book Images“ (Millionen gemeinfreie Buchseiten)</label>
+      <p class="small muted" style="margin:0">Es werden nur Bilder ohne bekannte Rechte, Public Domain, CC0, CC BY und CC BY-SA gesucht. Ob Flickr das Auslesen der Bilder erlaubt, hängt vom Bild ab. Wenn nicht, hilft der Weg über „Eigenes Bild“.</p>
+    </div>
+    <form id="searchForm" class="addrow"><input class="txt" id="q" placeholder="z. B. Scherenschnitt, silhouette fox, Konewka" style="flex:1"><button class="btn pri">Suchen</button></form>
+    <div class="chips" id="qChips"></div>
+    <div id="searchMsg" class="small muted"></div>
+    <div class="results" id="results"></div>
+    <div class="exp"><button class="btn" id="more" hidden>Mehr laden</button><label class="btn" style="cursor:pointer">Eigenes Bild öffnen<input type="file" id="edFile" accept="image/*" hidden></label></div>
+  </div>
+  <div class="card" id="edCard" hidden>
+    <h2>Ausschneiden</h2>
+    <p class="muted small" style="margin:0">Mit dem Finger oder der Maus eine Schlinge um die Figur ziehen. Rot zeigt, was zur Silhouette wird.</p>
+    <div class="edrow">
+      <span class="seg" id="toolSeg"><button data-tool="lasso" class="on">Lasso</button><button data-tool="rect">Rechteck</button></span>
+      <button class="btn sm" id="edClear">Auswahl löschen</button>
+    </div>
+    <div class="edwrap"><canvas id="edCanvas"></canvas></div>
+    <div id="edSrc" class="small muted" style="margin-top:6px"></div>
+    <label class="sl" style="margin-top:8px">Erkennung <select id="edMode" class="txt" style="padding:5px"><option value="color">Alles, was nicht Papier ist</option><option value="dark">Nur dunkle Bereiche</option><option value="lasso">Genau die Lasso-Form</option></select><span></span></label>
+    <label class="sl">Schwelle <input type="range" id="edT" min="0.05" max="0.95" step="0.01" value="0.35"><output>0.35</output></label>
+    <label class="sl">Lücken schließen <input type="range" id="edClose" min="0" max="8" step="1" value="2"><output>2</output></label>
+    <label class="chk"><input type="checkbox" id="edHoles" checked> Innere Löcher füllen (Augen ggf. später als Loch)</label>
+    <label class="chk"><input type="checkbox" id="edLargest" checked> Nur das größte Teil behalten</label>
+    <label class="chk"><input type="checkbox" id="edInv"> Umkehren</label>
+    <div class="prevs"><div><canvas id="edPrev"></canvas></div><div><svg id="edVec"><path id="edVecPath" fill="#17121c" fill-rule="evenodd" stroke="#ff3b30" stroke-width="1"/></svg></div></div>
+    <div class="small muted" id="edStats" style="margin-top:4px"></div>
+    <div class="addrow"><input class="txt" id="edName" placeholder="Name der Figur" style="flex:1"></div>
+    <label class="sl" style="margin-top:8px">Höhe auf dem Rad <input type="range" id="edH" min="8" max="45" step="1" value="24"><output>24 mm</output></label>
+    <div class="exp"><button class="btn pri" id="edAdd">Zur Bibliothek hinzufügen</button><button class="btn" id="edAddPlace">Hinzufügen &amp; auf das Rad setzen</button></div>
   </div>
 </section>
 
@@ -685,7 +748,7 @@ function setTab(t){
   if(!document.querySelector(`[data-panel="${t}"]`))t='geschichten';
   state.tab=t;$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);
-  $('#grid').classList.toggle('noview',t==='prompts'||t==='tipps');
+  $('#grid').classList.toggle('noview',t==='prompts'||t==='tipps'||t==='archiv');
   $('#svgOut').hidden=true;status('');
   if(location.hash.slice(1)!==t)history.replaceState(null,'','#'+t);
   state.islands='show';setWallMode(t==='mathe'?'ganz':'rand');
@@ -803,13 +866,17 @@ $('#scDemo').onclick=()=>{ // simuliertes KI-Szenenraster aus der Bibliothek
 /* ---------------- ③ Baukasten ---------------- */
 let bk;
 function saveBk(){try{localStorage.setItem('schattenrad-bk',JSON.stringify(bk));}catch(e){}}
-function saveCustom(){try{localStorage.setItem('schattenrad-custom',JSON.stringify(Object.fromEntries(Object.entries(custom).map(([k,v])=>[k,{label:v.label,url:v.url,aspect:v.aspect,warp:v.warp,hmm:v.hmm}]))));}catch(e){status('Hinweis: Browser-Speicher voll – eigene Figuren bleiben nur bis zum Neuladen.');}}
+function saveCustom(){try{localStorage.setItem('schattenrad-custom',JSON.stringify(Object.fromEntries(Object.entries(custom).map(([k,v])=>[k,{label:v.label,url:v.url,aspect:v.aspect,warp:v.warp,hmm:v.hmm,src:v.src}]))));}catch(e){status('Hinweis: Browser-Speicher voll – eigene Figuren bleiben nur bis zum Neuladen.');}}
 function addCustom(id,label,url,aspect,cb,o={}){
   const img=new Image();img.onload=()=>{const h=o.hmm||24,w=h*aspect;
-    custom[id]={label:'★ '+label,url,aspect,img,h,w,warp:!!o.warp,hmm:o.hmm,pad:[-w/2,w/2],draw(F){F.ctx.drawImage(img,-w/2,-h,w,h);}};fillAddSel();cb&&cb();};img.src=url;}
+    custom[id]={label:'★ '+label,url,aspect,img,h,w,warp:!!o.warp,hmm:o.hmm,src:o.src,pad:[-w/2,w/2],draw(F){F.ctx.drawImage(img,-w/2,-h,w,h);}};fillAddSel();myLib();cb&&cb();};img.src=url;}
+function myLib(){const el=$('#myLib');if(!el)return;const e=Object.entries(custom);
+  el.innerHTML=e.length?e.map(([k,v])=>`<li><img src="${v.url}" alt=""><div class="grow">${esc(v.label.replace(/^★ /,''))}${v.src?`<div class="muted" style="font-size:11.5px;overflow:hidden;text-overflow:ellipsis">${v.src.url?`<a href="${esc(v.src.url)}" target="_blank" rel="noopener">${esc(v.src.author||'Quelle')}</a>`:esc(v.src.author||'')} · ${esc(v.src.license||'')}</div>`:''}</div><button class="btn sm" data-del="${k}" title="Löschen">✕</button></li>`).join(''):'<li class="muted">Noch keine – lade eine Figur hoch oder schneide eine im Bildarchiv aus.</li>';}
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 try{bk=JSON.parse(localStorage.getItem('schattenrad-bk'));}catch(e){}
 if(!bk||!Array.isArray(bk.items))bk=JSON.parse(JSON.stringify(STORY));
-try{const cs=JSON.parse(localStorage.getItem('schattenrad-custom')||'{}');for(const [k,v] of Object.entries(cs))addCustom(k,v.label.replace(/^★ /,''),v.url,v.aspect,()=>{bkRender();if(state.tab==='baukasten')schedule(10);},{warp:v.warp,hmm:v.hmm});}catch(e){}
+try{const cs=JSON.parse(localStorage.getItem('schattenrad-custom')||'{}');for(const [k,v] of Object.entries(cs))addCustom(k,v.label.replace(/^★ /,''),v.url,v.aspect,()=>{bkRender();if(state.tab==='baukasten')schedule(10);},{warp:v.warp,hmm:v.hmm,src:v.src});}catch(e){}
+$('#myLib').addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(!b)return;const id=b.dataset.del;delete custom[id];bk.items=bk.items.filter(it=>it.f!==id);saveCustom();saveBk();fillAddSel();myLib();bkRender();schedule(10);});
 function figOptions(sel){const all=[...Object.entries(FIG),...Object.entries(custom)];return all.map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v.label}</option>`).join('');}
 function fillAddSel(){$('#bkAddSel').innerHTML=`<option value="__wellen">Wellen-Reihe (Fluss)</option>`+figOptions('wandermaus');}
 function bkRender(){
@@ -852,7 +919,7 @@ $('#bkFile').onchange=e=>{const file=e.target.files[0];if(!file)return;loadImage
   cx.putImageData(id,0,0);const cid='c'+Date.now().toString(36),name=file.name.replace(/\.[^.]+$/,'').slice(0,24);
   addCustom(cid,name,c.toDataURL(),w/h,()=>{saveCustom();bk.items.push({f:cid,a:Math.round(topAngle())});saveBk();bkRender();schedule(10);status('Eigene Figur „'+name+'“ eingefügt.');});
 });e.target.value='';};
-fillAddSel();bkRender();
+fillAddSel();bkRender();myLib();
 
 /* ---------------- Prompts ---------------- */
 const STYLE='Every shape is solid pure black (#000) on pure white, chunky and simple like a picture book for a 3-year-old, side-view profiles, all figures firmly attached to the disc, no floating parts, no thin lines, no gray, no gradients, no shading, no text, no frame. Square image.';
@@ -978,6 +1045,129 @@ $('#genRand').onclick=()=>{const P=math.P[math.gen];for(const p of GEN[math.gen]
   P.rimN=Math.random()<.5?0:Math.round(12+Math.random()*48);P.spokes=Math.random()<.6?0:Math.round(3+Math.random()*7);mathUI();state.islands='show';schedule(10);};
 $('#genReset').onclick=()=>{math.P[math.gen]=defaults(math.gen);mathUI();schedule(10);};
 mathUI();
+
+/* ---------------- ⑤ Bildarchiv ---------------- */
+const arc={src:'commons',q:'',next:null,page:1};
+const QCHIPS=['Scherenschnitt','Paul Konewka','Karl Fröhlich Scherenschnitt','Arthur Rackham silhouette','silhouette animals','Struwwelpeter','Internet Archive Book Images fox','Grandville animals'];
+$('#qChips').innerHTML=QCHIPS.map(q=>`<button data-q="${q}">${q}</button>`).join('');
+$('#qChips').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(!b)return;$('#q').value=b.dataset.q;doSearch(true);});
+$$('#srcSeg button').forEach(b=>b.onclick=()=>{arc.src=b.dataset.src;$$('#srcSeg button').forEach(x=>x.classList.toggle('on',x===b));$('#flickrOpts').hidden=arc.src!=='flickr';$('#results').innerHTML='';$('#more').hidden=true;});
+try{$('#flickrKey').value=localStorage.getItem('schattenrad-flickr')||'';}catch(e){}
+$('#flickrKey').addEventListener('change',e=>{try{localStorage.setItem('schattenrad-flickr',e.target.value.trim());}catch(err){}});
+$('#searchForm').addEventListener('submit',e=>{e.preventDefault();doSearch(true);});
+$('#more').onclick=()=>doSearch(false);
+const stripHtml=h=>{const d=document.createElement('div');d.innerHTML=h||'';return d.textContent.trim();};
+const FL_LIC={1:'CC BY-NC-SA',2:'CC BY-NC',3:'CC BY-NC-ND',4:'CC BY',5:'CC BY-SA',7:'keine bekannten Rechte',9:'CC0',10:'Public Domain'};
+async function doSearch(fresh){
+  const q=$('#q').value.trim();if(!q)return;const msg=$('#searchMsg');
+  if(fresh){arc.q=q;arc.next=null;arc.page=1;$('#results').innerHTML='';}
+  msg.textContent='Suche …';
+  try{
+    let items=[];
+    if(arc.src==='commons'){
+      const off=arc.next||0;
+      const u=`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(arc.q+' filetype:bitmap')}&gsrnamespace=6&gsrlimit=30&gsroffset=${off}&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=300&iiextmetadatafilter=LicenseShortName|Artist`;
+      const j=await (await fetch(u)).json();
+      items=Object.values(j.query?.pages||{}).sort((a,b)=>a.index-b.index).filter(p=>p.imageinfo).map(p=>{const ii=p.imageinfo[0],m=ii.extmetadata||{};
+        return {thumb:ii.thumburl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),file:p.title,url:ii.descriptionurl,license:m.LicenseShortName?.value||'',author:stripHtml(m.Artist?.value)};});
+      arc.next=j.continue?.gsroffset??null;
+    }else{
+      const key=$('#flickrKey').value.trim();if(!key){msg.textContent='Bitte zuerst einen Flickr API-Key eintragen.';return;}
+      const ia=$('#flickrIA').checked?'&user_id=126377022%40N07':'';
+      const u=`https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=${encodeURIComponent(key)}&text=${encodeURIComponent(arc.q)}&license=4,5,7,9,10${ia}&sort=relevance&content_types=0&extras=url_q,url_c,url_l,owner_name,license&per_page=30&page=${arc.page}&format=json&nojsoncallback=1`;
+      const j=await (await fetch(u)).json();if(j.stat!=='ok')throw new Error(j.message||'Flickr-Fehler');
+      items=j.photos.photo.filter(p=>p.url_q).map(p=>({thumb:p.url_q,big:p.url_l||p.url_c||p.url_q,title:p.title||'Flickr-Bild',url:`https://www.flickr.com/photos/${p.owner}/${p.id}`,license:FL_LIC[p.license]||'',author:p.ownername}));
+      arc.page++;arc.next=j.photos.page<j.photos.pages?arc.page:null;
+    }
+    const box=$('#results'),start=box.children.length;
+    box.insertAdjacentHTML('beforeend',items.map((it,i)=>`<button data-i="${start+i}" title="${esc(it.title)}"><img loading="lazy" src="${esc(it.thumb)}" alt="${esc(it.title)}"><span>${esc(it.license)}</span></button>`).join(''));
+    arc.items=(fresh?[]:arc.items||[]).concat(items);
+    msg.textContent=items.length?`${arc.items.length} Treffer – antippen zum Ausschneiden.`:'Keine Treffer. Versuch es mit einem anderen Begriff (auch englisch).';
+    $('#more').hidden=arc.next==null;
+  }catch(e){msg.innerHTML=`Die Suche hat nicht geklappt (${esc(e.message)}). Im Claude-Vorschaufenster blockiert der Browser externe Abfragen – auf GitHub Pages (<a href="https://haucky.github.io/schattenrad/#archiv">haucky.github.io/schattenrad</a>) funktioniert es. Alternativ: „Eigenes Bild öffnen“.`;}
+}
+$('#results').addEventListener('click',async e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=arc.items[+b.dataset.i];$('#searchMsg').textContent='Lade Bild …';
+  let big=it.big;
+  if(!big&&it.file){try{const j=await (await fetch(`https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&titles=${encodeURIComponent(it.file)}&prop=imageinfo&iiprop=url&iiurlwidth=1400`)).json();const p=Object.values(j.query.pages)[0];big=p.imageinfo[0].thumburl||p.imageinfo[0].url;}catch(err){big=it.thumb;}}
+  const img=new Image();img.crossOrigin='anonymous';
+  img.onload=()=>{$('#searchMsg').textContent='';edOpen(img,{title:it.title,author:it.author,license:it.license,url:it.url});};
+  img.onerror=()=>{$('#searchMsg').innerHTML=`Dieses Bild darf nicht direkt ausgelesen werden. <a href="${esc(it.url)}" target="_blank" rel="noopener">Bild öffnen</a>, speichern und über „Eigenes Bild öffnen“ laden.`;};
+  img.src=big;});
+$('#edFile').onchange=e=>{const f=e.target.files[0];if(f)loadImageFile(f,img=>edOpen(img,{title:f.name.replace(/\.[^.]+$/,''),author:'eigenes Bild',license:'',url:''}));e.target.value='';};
+
+const ed={tool:'lasso',sel:null};
+function edOpen(img,src){
+  const sc=Math.min(1,1000/Math.max(img.naturalWidth,img.naturalHeight)),W=Math.round(img.naturalWidth*sc),H=Math.round(img.naturalHeight*sc);
+  const cv=$('#edCanvas');cv.width=W;cv.height=H;const x=cv.getContext('2d',{willReadFrequently:true});x.fillStyle='#fff';x.fillRect(0,0,W,H);x.drawImage(img,0,0,W,H);
+  let px;try{px=x.getImageData(0,0,W,H).data;}catch(e){$('#searchMsg').innerHTML=`Dieses Bild darf nicht ausgelesen werden. ${src.url?`<a href="${esc(src.url)}" target="_blank" rel="noopener">Bild öffnen</a>, speichern und `:''}über „Eigenes Bild öffnen“ laden.`;return;}
+  Object.assign(ed,{img,W,H,px,src,sel:null,res:null});
+  $('#edCard').hidden=false;$('#edName').value=(src.title||'Figur').slice(0,28);
+  $('#edSrc').innerHTML=src.url?`Quelle: <a href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.title)}</a>${src.author?' · '+esc(src.author):''}${src.license?' · '+esc(src.license):''}`:'';
+  edCompute();$('#edCard').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function edDraw(){const cv=$('#edCanvas'),x=cv.getContext('2d');x.globalAlpha=1;x.fillStyle='#fff';x.fillRect(0,0,ed.W,ed.H);x.drawImage(ed.img,0,0,ed.W,ed.H);
+  if(ed.res){x.globalAlpha=.55;x.drawImage(ed.res.tint,0,0);x.globalAlpha=1;}
+  const p=ed.drawSel||ed.sel;if(p&&p.length>1){x.lineWidth=Math.max(1.5,ed.W/400);x.setLineDash([6,4]);x.strokeStyle='#0a6cff';x.beginPath();p.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));if(!ed.drawSel)x.closePath();x.stroke();x.setLineDash([]);}}
+(function(){const cv=$('#edCanvas');let down=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*ed.W/r.width,(e.clientY-r.top)*ed.H/r.height];};
+  cv.addEventListener('pointerdown',e=>{if(!ed.img)return;cv.setPointerCapture(e.pointerId);const p=pt(e);down=p;ed.drawSel=[p];edDraw();});
+  cv.addEventListener('pointermove',e=>{if(!down)return;const p=pt(e);
+    if(ed.tool==='rect')ed.drawSel=[down,[p[0],down[1]],p,[down[0],p[1]],down];
+    else{const l=ed.drawSel[ed.drawSel.length-1];if(Math.hypot(p[0]-l[0],p[1]-l[1])>ed.W/250)ed.drawSel.push(p);}edDraw();});
+  const up=()=>{if(!down)return;down=null;const s=ed.drawSel;ed.drawSel=null;if(s&&s.length>3)ed.sel=ed.tool==='rect'?s.slice(0,4):s;edCompute();};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);})();
+$$('#toolSeg button').forEach(b=>b.onclick=()=>{ed.tool=b.dataset.tool;$$('#toolSeg button').forEach(x=>x.classList.toggle('on',x===b));});
+$('#edClear').onclick=()=>{ed.sel=null;edCompute();};
+['#edT','#edClose'].forEach(s=>$(s).addEventListener('input',e=>{e.target.nextElementSibling.textContent=e.target.value;clearTimeout(ed.t);ed.t=setTimeout(edCompute,120);}));
+['#edMode','#edHoles','#edLargest','#edInv'].forEach(s=>$(s).addEventListener('change',edCompute));
+$('#edH').addEventListener('input',e=>e.target.nextElementSibling.textContent=e.target.value+' mm');
+function maxFilt(a,w,h,r,isMax){const o=new Uint8Array(w*h),t=new Uint8Array(w*h);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let v=isMax?0:1;for(let k=Math.max(0,x-r);k<=Math.min(w-1,x+r);k++){const q=a[y*w+k];if(isMax?q>v:q<v){v=q;}}t[y*w+x]=v;}
+  for(let x=0;x<w;x++)for(let y=0;y<h;y++){let v=isMax?0:1;for(let k=Math.max(0,y-r);k<=Math.min(h-1,y+r);k++){const q=t[k*w+x];if(isMax?q>v:q<v){v=q;}}o[y*w+x]=v;}
+  return o;}
+function edCompute(){
+  if(!ed.img)return;const {W,H,px}=ed;
+  // Auswahl
+  let poly=ed.sel&&ed.sel.length>2?ed.sel:[[0,0],[W,0],[W,H],[0,H]];
+  let x0=W,y0=H,x1=0,y1=0;for(const [x,y] of poly){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+  x0=Math.max(0,Math.floor(x0)-2);y0=Math.max(0,Math.floor(y0)-2);x1=Math.min(W-1,Math.ceil(x1)+2);y1=Math.min(H-1,Math.ceil(y1)+2);
+  const cw=x1-x0+1,ch=y1-y0+1,mc=document.createElement('canvas');mc.width=cw;mc.height=ch;const mx=mc.getContext('2d');
+  mx.beginPath();poly.forEach((q,i)=>i?mx.lineTo(q[0]-x0,q[1]-y0):mx.moveTo(q[0]-x0,q[1]-y0));mx.closePath();mx.fill();const md=mx.getImageData(0,0,cw,ch).data;
+  // Papierfarbe = Median entlang des Auswahlrands
+  const rs=[],gs=[],bs=[];for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/4));
+    for(let k=0;k<n;k++){const x=Math.round(a[0]+(b[0]-a[0])*k/n),y=Math.round(a[1]+(b[1]-a[1])*k/n);if(x<0||y<0||x>=W||y>=H)continue;const j=(y*W+x)*4;rs.push(px[j]);gs.push(px[j+1]);bs.push(px[j+2]);}}
+  const med=a=>{a.sort((p,q)=>p-q);return a.length?a[a.length>>1]:255;};const br=med(rs),bg=med(gs),bb=med(bs);
+  const mode=$('#edMode').value,T=+$('#edT').value,inv=$('#edInv').checked;
+  let fg=new Uint8Array(cw*ch);
+  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){const i=y*cw+x;if(md[i*4+3]<128)continue;const j=((y+y0)*W+x+x0)*4,r=px[j],g=px[j+1],b=px[j+2];
+    let v;if(mode==='lasso')v=1;else if(mode==='dark')v=(.299*r+.587*g+.114*b)/255<T;else v=Math.hypot(r-br,g-bg,b-bb)/441>T*.6;
+    if(inv&&mode!=='lasso')v=!v;fg[i]=v?1:0;}
+  const rc=+$('#edClose').value;if(rc){fg=maxFilt(maxFilt(fg,cw,ch,rc,true),cw,ch,rc,false);for(let i=0;i<fg.length;i++)if(md[i*4+3]<128)fg[i]=0;}
+  let f=new Float32Array(cw*ch);for(let i=0;i<f.length;i++)f[i]=fg[i];
+  if($('#edHoles').checked){const B=comps(f,cw,ch,.5,false);for(let i=0;i<f.length;i++){const l=B.lab[i];if(l&&!B.border[l])f[i]=1;}}
+  if($('#edLargest').checked){const C=comps(f,cw,ch,.5,true);let m=1;for(let l=2;l<C.sizes.length;l++)if(C.sizes[l]>C.sizes[m])m=l;for(let i=0;i<f.length;i++)if(C.lab[i]!==m)f[i]=0;}
+  // Tönung fürs Original
+  const tint=document.createElement('canvas');tint.width=W;tint.height=H;const tx=tint.getContext('2d'),td=tx.createImageData(cw,ch);
+  let fx0=cw,fy0=ch,fx1=-1,fy1=-1,cnt=0;
+  for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){const i=y*cw+x;if(f[i]>=.5){cnt++;td.data[i*4]=255;td.data[i*4+1]=40;td.data[i*4+2]=40;td.data[i*4+3]=255;if(x<fx0)fx0=x;if(x>fx1)fx1=x;if(y<fy0)fy0=y;if(y>fy1)fy1=y;}}
+  tx.putImageData(td,x0,y0);
+  if(fx1<0){ed.res={tint,empty:true};edDraw();$('#edStats').textContent='Nichts erkannt – Schwelle oder Erkennung ändern.';$('#edPrev').width=1;$('#edVecPath').setAttribute('d','');return;}
+  // Figur zuschneiden, leicht glätten
+  const P=3,w=fx1-fx0+1+2*P,h=fy1-fy0+1+2*P;let g=new Float32Array(w*h);
+  for(let y=fy0;y<=fy1;y++)for(let x=fx0;x<=fx1;x++)g[(y-fy0+P)*w+x-fx0+P]=f[y*cw+x];
+  g=boxBlur(g,w,h,1);
+  const pc=$('#edPrev');pc.width=w;pc.height=h;const pcx=pc.getContext('2d'),pd=pcx.createImageData(w,h);
+  for(let i=0;i<g.length;i++){const a=Math.min(1,Math.max(0,(g[i]-.25)/.5));pd.data[i*4+3]=Math.round(a*255);}
+  pcx.putImageData(pd,0,0);
+  const loops=trace(g,w,h,.5),d=toPath(loops,0,0,1);$('#edVec').setAttribute('viewBox',`0 0 ${w} ${h}`);$('#edVecPath').setAttribute('d',d);$('#edVecPath').setAttribute('stroke-width',Math.max(w,h)/250);
+  $('#edStats').textContent=`Silhouette ${fx1-fx0+1}×${fy1-fy0+1} px · ${(d.match(/M/g)||[]).length} Kontur(en), vektorisiert · Papierfarbe rgb(${br},${bg},${bb})`;
+  ed.res={tint,url:pc.toDataURL(),aspect:w/h};edDraw();
+}
+function edAdd(place){if(!ed.res||ed.res.empty)return;const id='a'+Date.now().toString(36),name=$('#edName').value.trim()||'Figur',hmm=+$('#edH').value;
+  addCustom(id,name,ed.res.url,ed.res.aspect,()=>{saveCustom();
+    if(place){bk.items.push({f:id,a:Math.round(topAngle())});saveBk();bkRender();setTab('baukasten');status(`„${name}“ steht jetzt oben auf dem Rad.`);}
+    else $('#edStats').textContent=`✓ „${name}“ ist jetzt in der Bibliothek (Baukasten → Hinzufügen).`;},{hmm,src:ed.src});}
+$('#edAdd').onclick=()=>edAdd(false);$('#edAddPlace').onclick=()=>edAdd(true);
 
 /* ---------------- Start ---------------- */
 setTab(location.hash.slice(1)||'geschichten');
